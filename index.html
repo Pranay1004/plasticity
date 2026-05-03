@@ -650,28 +650,36 @@ canvas {
       </div>
     </div>
 
-    <!-- EQUIVALENT STRESS & STRAIN (moved from bottom) -->
+    <!-- 3D VISUALIZATION -->
     <div class="viz-stack">
       <div class="card">
-        <div class="card-title">(l) Equivalent Stress & Strain</div>
-        <div id="res_l"></div>
+        <div class="card-title">Free Body Diagram — Workpiece</div>
+        <canvas id="fbd3d" height="560" style="width:100%; display:block;"></canvas>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">
+          <span class="badge badge-warn">■ Normal stress</span>
+          <span class="badge badge-ok">■ Shear yz/zy</span>
+          <span class="badge badge-info">■ Shear xz/zx</span>
+          <span class="badge" style="background:#EFE7FF;color:#6B46C1;">■ Shear xy/yx</span>
+          <span style="font-size:0.72rem;color:var(--light);margin-left:auto;align-self:center;">Drag diagram to rotate</span>
+        </div>
       </div>
       <div class="card">
-        <div class="card-title">(m) Upper Bound Power</div>
-        <div id="res_m"></div>
+        <div class="card-title">FBD Stress Marking</div>
+        <div id="fbdInfo">
+          <p style="color:var(--light);font-style:italic;">Live stress-face summary appears here.</p>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <!-- SHEAR FACES TABLE — full width (COMMENTED OUT)
-  <div class="card" style="margin-bottom:1.5rem; display:none;">
+  <!-- SHEAR FACES TABLE — full width -->
+  <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-title">Shear Stress on All 6 Faces — Detailed Analysis</div>
     <div id="shearFacesContent">
       <p style="color:var(--light);font-style:italic;">Click Analyze to populate.</p>
     </div>
   </div>
-  -->
 
   <!-- RESULTS ROW 1 -->
   <div class="grid-results" id="resultsSection" style="display:none;">
@@ -732,12 +740,14 @@ canvas {
       <div id="res_k"></div>
     </div>
 
-    <!-- LATERAL SHEAR POWER CARD -->
     <div class="card">
-      <div class="card-title">(i.2) Lateral Shear Power — All 6 Faces</div>
-      <div id="lateralShearContent">
-        <p style="color:var(--light);font-style:italic;">Click Analyze to populate lateral shear calculations.</p>
-      </div>
+      <div class="card-title">(l) Equivalent Stress & Strain</div>
+      <div id="res_l"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(m) Upper Bound Power</div>
+      <div id="res_m"></div>
     </div>
 
     <!-- EXPORT -->
@@ -1712,52 +1722,9 @@ function renderResults(R) {
       <div class="power-box"><div class="val">${R.i.P_shear}</div><div class="lbl">P_shear (top)</div></div>
       <div class="power-box" style="background:#FDF0DC;"><div class="val">${R.i.P_ext}</div><div class="lbl">P_external total</div></div>
     </div>
-    ${bkd}`;
-
-  // (i.2) Lateral Shear Power - All 6 Faces
-  if (R.shearFaces && R.shearFaces.length > 0) {
-    const shearFaces = R.shearFaces;
-    const prettyComp = text => text.replace(/([A-Za-zτσ̇]+)_([A-Za-z0-9]+)/g, '$1<sub>$2</sub>');
-    
-    let html = `
-      <div style="margin-top:1rem;">
-        <table class="shear-table">
-          <thead><tr><th>Face</th><th>Component</th><th>τ value</th><th>Power (∫)</th><th>Status</th></tr></thead>
-          <tbody>`;
-    
-    shearFaces.forEach(f => {
-      html += `<tr>
-        <td><span class="face-tag ${f.active?'face-active':'face-note'}">${f.name}</span></td>
-        <td style="font-family:'JetBrains Mono',monospace;">${prettyComp(f.stressComp)}</td>
-        <td>${f.tauVal}</td>
-        <td><strong>${f.power}</strong></td>
-        <td><span class="badge ${f.active?'badge-warn':'badge-ok'}">${f.active?'Active':'Zero'}</span></td>
-      </tr>`;
-    });
-    
-    html += `</tbody></table></div>`;
-    
-    // Add explanation
-    html += `
-      <div class="explain-box" style="margin-top:1rem;margin-bottom:0.8rem;">
-        <strong>Lateral Shear Power Calculation:</strong><br><br>
-        Each face shows the shear stress component and its contribution to power via integration.<br>
-        • <strong>Z+ (top) / Z- (bottom)</strong>: Shear on loaded face (external power input)<br>
-        • <strong>Y+ / Y-</strong>: Lateral faces perpendicular to Y-axis<br>
-        • <strong>X+ / X-</strong>: Lateral faces perpendicular to X-axis<br><br>
-        <strong>Note:</strong> For external power balance, use only the <strong>loaded face (Z+)</strong>.<br>
-        Internal power uses σ·ε̇ volume integral (implicitly counts all faces).
-      </div>
-      <div class="explain-box">
-        <strong>Power Guide:</strong><br>
-        • External = σ·A·V on loaded faces only<br>
-        • Shear on lateral faces = internal tractions<br>
-        • P_internal = ∫∫∫ σᵢⱼ·ε̇ᵢⱼ dV<br>
-        • Check: P_ext ≈ P_int when velocity field is compatible
-      </div>`;
-    
-    document.getElementById('lateralShearContent').innerHTML = html;
-  }
+    ${bkd}
+    <div style="margin-top:0.6rem;"><div class="result-title">Lateral face shear power</div>
+      <div class="result-val">${R.i.P_lat} units</div></div>`;
 
   // (j) Internal Power
   document.getElementById('res_j').innerHTML = `
@@ -1776,7 +1743,27 @@ function renderResults(R) {
       </span>
     </div>`;
 
-  // (l) and (m) are now rendered in the top viz-stack section
+  // (l)
+  document.getElementById('res_l').innerHTML = `
+    <div class="highlight-box">
+      <div class="big-num">${R.l.sig_eq}</div>
+      <div class="unit">σ̄ — Equivalent stress (units)</div>
+    </div>
+    <div class="highlight-box" style="margin-top:0.6rem;">
+      <div class="big-num">${R.l.eps_eq}</div>
+      <div class="unit">ε̄̇ — Effective strain rate (s<sup>−1</sup>)</div>
+    </div>
+    <div class="check-row" style="margin-top:0.5rem;font-size:0.78rem;">
+      σ̄·ε̄̇ = ${n(R.l.sig_eq*R.l.eps_eq,4)} &nbsp;≈ density ${R.j.density}
+    </div>`;
+
+  // (m)
+  document.getElementById('res_m').innerHTML = `
+    <div class="result-block"><div class="result-title">P<sub>UB</sub> per unit volume</div>
+      <div class="result-val highlight">${R.m.density} units/vol</div></div>
+    <div class="result-block"><div class="result-title">P<sub>UB</sub> total = σ̄·ε̄̇·Vol</div>
+      <div class="result-val highlight">${R.m.P_ub} units</div></div>
+    <div class="explain-box">Upper bound = σ̄ × ε̄̇ × Volume. The assumed linear velocity field is kinematically admissible ∴ it provides a valid upper bound.</div>`;
 }
 
 // ========================
