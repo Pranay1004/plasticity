@@ -1,0 +1,27 @@
+Tech Stack and Purpose
+
+- HTML5: single-page UI structure for inputs, analysis cards, formulas, and export controls.
+- CSS3: warm theme, card layout, responsive grids, spacing, badges, tables, and canvas styling.
+- JavaScript: analysis engine, UI state, rendering, tensor math, power balance calculations, and export generation.
+- KaTeX: renders math expressions, subscripts, superscripts, and characteristic polynomials cleanly.
+- Three.js: 3D free-body diagram of the upsetting workpiece and stress arrows.
+- Canvas 2D API: draws Mohr's circle, velocity field, arrows, and other 2D diagrams.
+- Google Fonts (Playfair Display, JetBrains Mono, Lato): serif display headings, monospaced values, and readable body text.
+- Vercel: static hosting and deployment of the finished site.
+- Git / GitHub: version control and remote repository hosting.
+
+Feature Purpose Mapping
+
+- Applied Stress Tensor: shows the input tensor used in the calculation.
+- Stress Invariants: computes I1, I2, I3 and the characteristic polynomial.
+- Principal Stresses: solves eigenvalues and builds deviatoric stress.
+- Mohr's Circle: visualizes the active stress plane and principal stresses.
+- Flow Condition: compares Von Mises and Tresca criteria.
+- Strain Rate Tensor: shows strain-rate components, invariants, and principal strain rates.
+- Velocity Field: displays the compatible velocity equations used for power calculations.
+- External Power: computes compression and shear power on the loaded face.
+- Internal Power: computes deviatoric stress power over the volume.
+- Principal Power: computes power using principal stress and principal strain-rate values.
+- Equivalent Stress & Strain: computes equivalent stress and effective strain-rate with step-by-step formulas.
+- Lateral Shear Power: shows shear power contributions on the other faces.
+- Export Results: saves the full analysis as JSON, YAML, Markdown, or plain text.

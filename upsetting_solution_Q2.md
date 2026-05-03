@@ -12,7 +12,6 @@ $$\sigma_{zz} = -5 \text{ units}$$
 Friction between the platen and workpiece produces a shear stress:
 
 $$\tau_{yz} = \tau_{zy} = 2 \text{ units}$$
-
 The tool (ram) velocity:
 
 $$V_z = -1 \text{ unit/s (compressive)}$$

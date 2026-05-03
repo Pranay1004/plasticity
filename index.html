@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upsetting Process — Stress & Power Analyzer</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
@@ -41,7 +42,7 @@ body {
 header {
   background: linear-gradient(135deg, #2C1A0E 0%, #5C300F 60%, #8B4A18 100%);
   color: white;
-  padding: 0.5rem 0.4rem 0.4rem;
+  padding: 0.55rem 1rem 0.7rem;
   position: relative;
   overflow: hidden;
 }
@@ -52,10 +53,11 @@ header::before {
 }
 header h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 2.2rem;
+  font-size: 1.9rem;
   letter-spacing: 0.02em;
   position: relative;
-  text-align: center;
+  text-align: left;
+  line-height: 1;
 }
 header p {
   display: none;
@@ -77,15 +79,42 @@ header p {
   position: relative;
 }
 
-/* LAYOUT */
-.app-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+.header-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+}
 
-.grid-top { display: grid; grid-template-columns: 320px 1.6fr; gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch; }
+.header-row > div:first-child {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+}
+
+.header-toggle-group {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.header-toggle-group .toggle-btn {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.75rem;
+}
+
+/* LAYOUT */
+.app-container { max-width: 1400px; margin: 0 auto; padding: 1rem 1.25rem 1.25rem; }
+
+.grid-top { display: grid; grid-template-columns: 300px 1.6fr; gap: 1rem; margin-bottom: 1rem; align-items: stretch; }
 .grid-top > .card,
 .grid-top > .viz-stack { height: 100%; }
-.viz-stack { display: grid; grid-template-rows: minmax(560px, 1fr) auto; gap: 1.5rem; }
+.viz-stack { display: grid; grid-template-rows: minmax(380px, 1fr) auto; gap: 1rem; }
 .grid-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-.grid-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch; }
+.grid-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; align-items: stretch; }
 .grid-results > .card { height: 100%; }
 
 /* CARDS */
@@ -93,21 +122,21 @@ header p {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1.4rem;
+  padding: 1rem 1.1rem;
   box-shadow: var(--shadow);
   transition: box-shadow 0.2s;
 }
 .card:hover { box-shadow: var(--shadow-hover); }
 .card-title {
   font-family: 'Playfair Display', serif;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   color: var(--amber-deep);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   border-bottom: 2px solid var(--border);
-  padding-bottom: 0.6rem;
+  padding-bottom: 0.45rem;
 }
 .card-title .icon { font-size: 1.1rem; }
 
@@ -455,12 +484,21 @@ canvas {
   .grid-top { grid-template-columns: 1fr; }
   .grid-viz { grid-template-columns: 1fr; }
   .grid-results { grid-template-columns: 1fr 1fr; }
+  .header-row { grid-template-columns: 1fr; }
+  .header-row > div:first-child,
+  .header-toggle-group { grid-column: auto; justify-self: stretch; text-align: left; }
 }
 @media (max-width: 700px) {
   .grid-results { grid-template-columns: 1fr; }
   header h1 { font-size: 1.5rem; }
+  .header-toggle-group { width: 100%; flex-wrap: wrap; }
+  .header-row { grid-template-columns: 1fr; }
+  .header-row > div:first-child,
+  .header-toggle-group { grid-column: auto; justify-self: stretch; text-align: left; }
+  .power-summary { grid-template-columns: 1fr; }
+  .power-box { width: 100%; }
+  .result-val { word-break: break-word; }
 }
-
 .full-width { grid-column: 1 / -1; }
 .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
@@ -537,24 +575,34 @@ canvas {
   margin-right: 0.35rem;
   vertical-align: -1px;
 }
+
+#res_l_grid .result-val {
+  white-space: normal;
+  line-height: 1.45;
+}
+
+#res_l_grid .katex {
+  font-size: 0.94em;
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Upsetting Process</h1>
-  <p>Manufacturing Technology · Metal Forming · Plasticity Theory</p>
-  <span class="header-badge">IIST · M.Tech · Additive & Conventional Manufacturing</span>
+  <div class="header-row">
+    <div>
+      <h1>Upsetting Process</h1>
+      <p>Manufacturing Technology · Metal Forming · Plasticity Theory</p>
+      <span class="header-badge">IIST · M.Tech · Additive & Conventional Manufacturing</span>
+    </div>
+    <div class="header-toggle-group">
+      <button onclick="switchView('analysis')" id="btnAnalysis" class="toggle-btn active">Analysis</button>
+      <button onclick="switchView('formulas')" id="btnFormulas" class="toggle-btn">Formulas</button>
+    </div>
+  </div>
 </header>
 
-<div class="status-bar">
-  <span style="display:none;"><span class="status-dot"></span>Live Computation</span>
-  <span id="statusMsg" style="display:none;">Ready — live computation is enabled</span>
-  <div style="margin-left:auto;display:flex;gap:0.8rem;">
-    <button onclick="switchView('analysis')" id="btnAnalysis" class="toggle-btn active" style="padding:0.3rem 0.8rem;font-size:0.75rem;">Analysis</button>
-    <button onclick="switchView('formulas')" id="btnFormulas" class="toggle-btn" style="padding:0.3rem 0.8rem;font-size:0.75rem;">Formulas</button>
-  </div>
-</div>
+<div id="statusMsg" style="display:none;"></div>
 
 <div class="app-container">
 
@@ -601,7 +649,7 @@ canvas {
         <input type="number" id="sigmaN" value="10" oninput="scheduleAnalyze()">
       </div>
 
-      <div class="section-label">Ram Velocity</div>
+      <div class="section-label">Ram Velocity along Loaded Face</div>
       <div class="input-group">
         <div class="mini-label">V (units/s)</div>
         <input type="number" id="ramVel" value="2" oninput="scheduleAnalyze()"></div>
@@ -654,7 +702,7 @@ canvas {
     <div class="viz-stack">
       <div class="card">
         <div class="card-title">Free Body Diagram — Workpiece</div>
-        <canvas id="fbd3d" height="560" style="width:100%; display:block;"></canvas>
+        <canvas id="fbd3d" height="380" style="width:100%; display:block;"></canvas>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">
           <span class="badge badge-warn">■ Normal stress</span>
           <span class="badge badge-ok">■ Shear yz/zy</span>
@@ -664,59 +712,58 @@ canvas {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">FBD Stress Marking</div>
-        <div id="fbdInfo">
-          <p style="color:var(--light);font-style:italic;">Live stress-face summary appears here.</p>
-        </div>
+        <div class="card-title">Summary</div>
+        <div id="res_l"></div>
       </div>
     </div>
 
   </div>
 
-  <!-- SHEAR FACES TABLE — full width -->
+  <!-- SHEAR FACES TABLE — full width (COMMENTED OUT)
   <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-title">Shear Stress on All 6 Faces — Detailed Analysis</div>
     <div id="shearFacesContent">
       <p style="color:var(--light);font-style:italic;">Click Analyze to populate.</p>
     </div>
   </div>
+  -->
 
   <!-- RESULTS ROW 1 -->
   <div class="grid-results" id="resultsSection" style="display:none;">
 
     <div class="card">
-      <div class="card-title"><span class="icon">🔢</span> (a) Applied Stress Tensor</div>
+      <div class="card-title">(a) Applied Stress Tensor</div>
       <div id="res_a"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">Σ</span> (b) Stress Invariants</div>
+      <div class="card-title">(b) Stress Invariants</div>
       <div id="res_b"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">⊕</span> (c) Principal & Deviatoric</div>
+      <div class="card-title">(c) Principal & Deviatoric</div>
       <div id="res_c"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">⊙</span> (d) Mohr's Circle</div>
+      <div class="card-title">(d) Mohr's Circle</div>
       <canvas id="mohrCanvas" height="220" style="margin:0; width:100%; display:block;"></canvas>
       <div id="res_d" style="padding:0.4rem 0 0 0; font-size:0.8rem; line-height:1.3;"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">🌊</span> (e) Flow Condition — k_f</div>
+      <div class="card-title">(e) Flow Condition — k_f</div>
       <div id="res_e"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">📈</span> (f) Strain Rate Tensor</div>
+      <div class="card-title">(f) Strain Rate Tensor</div>
       <div id="res_f"></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span class="icon">💨</span> (g) Velocity Field Equations</div>
+      <div class="card-title">(g) Velocity Field Equations</div>
       <div id="res_g"></div>
     </div>
 
@@ -741,8 +788,16 @@ canvas {
     </div>
 
     <div class="card">
-      <div class="card-title">(l) Equivalent Stress & Strain</div>
-      <div id="res_l"></div>
+      <div class="card-title">(l) Summary</div>
+      <div id="res_l_grid"></div>
+    </div>
+
+    <!-- NEW: Lateral Shear Power Card -->
+    <div class="card">
+      <div class="card-title">Lateral Shear Power on All 6 Faces</div>
+      <div id="shearFacesContent">
+        <p style="color:var(--light);font-style:italic;">Click Analyze to populate shear power calculations for each face.</p>
+      </div>
     </div>
 
     <div class="card">
@@ -907,19 +962,33 @@ function setLoadDir(dir, btn) {
   loadDir = dir;
   document.querySelectorAll('#loadDirGroup .toggle-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  updateBoundaryUI();
   scheduleAnalyze();
+}
+
+function updateBoundaryUI() {
+  const fixedBtn = document.querySelector('#bcGroup [data-bc="fixed"]');
+  const ex = document.getElementById('bcExplain');
+  if (fixedBtn) fixedBtn.textContent = loadDir === 'Z' ? 'Fixed Bottom' : 'Fixed Opposite Face';
+  if (!ex) return;
+
+  const axis = loadDir.toLowerCase();
+  const span = loadDir === 'Z' ? 'H' : (loadDir === 'X' ? 'L' : 'W');
+  const fixedText = loadDir === 'Z'
+    ? '<strong>Fixed bottom:</strong> z limits 0 → H. Ram compresses from top only.'
+    : `<strong>Fixed opposite face:</strong> ${axis} limits 0 → ${span}. Ram compresses from the opposite face along ${loadDir}.`;
+  const freeText = loadDir === 'Z'
+    ? '<strong>Both ends:</strong> z limits −H/2 → +H/2. Use half-height h = H/2 in ε̇<sub>load</sub> = −V/h.'
+    : `<strong>Both ends:</strong> ${axis} limits −${span}/2 → +${span}/2. Use half-span ${span}/2 in ε̇<sub>load</sub> = −V/h.`;
+
+  ex.innerHTML = bcType === 'fixed' ? fixedText : freeText;
 }
 
 function setBC(bc, btn) {
   bcType = bc;
   document.querySelectorAll('#bcGroup .toggle-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const ex = document.getElementById('bcExplain');
-  if (bc === 'fixed') {
-    ex.innerHTML = '<strong>Fixed bottom:</strong> z limits 0 → H. Use full height in ε̇<sub>load</sub> = −V/H.';
-  } else {
-    ex.innerHTML = '<strong>Both ends:</strong> z limits −H/2 → +H/2. Use half-height h = H/2 in ε̇<sub>load</sub> = −V/h.';
-  }
+  updateBoundaryUI();
   scheduleAnalyze();
 }
 
@@ -954,7 +1023,7 @@ function resetDefaults() {
   document.querySelector('#loadDirGroup [data-dir="Z"]').classList.add('active');
   document.querySelectorAll('#bcGroup .toggle-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('#bcGroup [data-bc="fixed"]').classList.add('active');
-  document.getElementById('bcExplain').innerHTML = '<strong>Fixed bottom:</strong> height limits 0 → H. Ram compresses from top only.';
+  updateBoundaryUI();
   document.getElementById('dimL').value = 20;
   document.getElementById('dimW').value = 20;
   document.getElementById('dimH').value = 50;
@@ -1012,6 +1081,16 @@ function n(v, d=4) { return parseFloat(v.toFixed(d)); }
 function fmt(v, d=3) {
   if (Math.abs(v) < 1e-9) return '0';
   return parseFloat(v.toFixed(d)).toString();
+}
+
+// KaTeX helper (safe if KaTeX not present)
+function katexify(latex) {
+  try {
+    if (window && window.katex && typeof katex.renderToString === 'function') {
+      return katex.renderToString(latex, {throwOnError:false});
+    }
+  } catch (e) {}
+  return latex;
 }
 
 function axisIndex(axis) {
@@ -1109,6 +1188,11 @@ function matrixHtml(T, digits = 2) {
   return `<div class="matrix-bracket"><span class="bracket">[</span><span class="matrix-rows">${rows}</span><span class="bracket">]</span></div>`;
 }
 
+
+function latexMatrix(T, digits = 3) {
+  const rows = T.map(row => row.map(v => fmt(v, digits)).join(' & ')).join('\\\\');
+  return `\\begin{bmatrix}${rows}\\end{bmatrix}`;
+}
 // ========================
 // TEST CASE LOADER
 // ========================
@@ -1173,6 +1257,11 @@ function analyze() {
   const H = parseFloat(document.getElementById('dimH').value);
   const sigN = parseFloat(document.getElementById('sigmaN').value);
   const V0 = parseFloat(document.getElementById('ramVel').value);
+  if (Number.isFinite(sigN) && sigN < 0) {
+    alert('Physics of tension + compression not incorporated in this analyzer. Use a positive compressive normal stress.');
+    document.getElementById('statusMsg').textContent = 'Blocked: tensile normal stress is not supported';
+    return;
+  }
   const bounds = getBounds(L, W, H, loadDir, bcType);
   const probePoint = [
     parseFloat(document.getElementById('probeX').value),
@@ -1215,6 +1304,11 @@ function analyze() {
   }
 
   const S = symmetrizeTensor(Sraw);
+  if (S[ld][ld] > 0) {
+    alert('Physics of tension + compression not incorporated in this analyzer. Use a positive compressive normal stress.');
+    document.getElementById('statusMsg').textContent = 'Blocked: tensile normal stress is not supported';
+    return;
+  }
 
   // GEOMETRY for integration
   const xLow = bounds.X[0], xHigh = bounds.X[1];
@@ -1355,6 +1449,11 @@ function analyze() {
   // =====================
   // Principal strain rates: eigenvalues of eSR
   const pe = eig3x3Sym(eSR);
+  // strain-rate invariants (I1,I2,I3 for ε̇)
+  const eI1 = eSR[0][0] + eSR[1][1] + eSR[2][2];
+  const eI2 = eSR[0][0]*eSR[1][1] + eSR[1][1]*eSR[2][2] + eSR[2][2]*eSR[0][0]
+              - eSR[0][1]**2 - eSR[1][2]**2 - eSR[0][2]**2;
+  const eI3 = det3(eSR);
 
   // =====================
   // (g) VELOCITY FIELD
@@ -1436,16 +1535,18 @@ function analyze() {
     const Vy_integral = (t_zy_val !== 0) ? integrateShearPowerSingle(t_zy_val, (x,y)=>Vy(x,y,z), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
     const Vx_integral = (t_zx_val !== 0) ? integrateShearPowerSingle(t_zx_val, (x,y)=>Vx(x,y,z), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
     P_shear_top = Vy_integral + Vx_integral;
-    P_shear_breakdown = [{face:'Top (Z='+n(z,1)+')', component:'τ_zy×Vy', val:n(Vy_integral)},
-                         {face:'Top (Z='+n(z,1)+')', component:'τ_zx×Vx', val:n(Vx_integral)}];
+    P_shear_breakdown = [
+      {face:'Top (Z='+n(z,1)+')', component:'<span class="math">τ<sub>zy</sub></span> × <span class="math">V<sub>y</sub></span>', val:n(Vy_integral)},
+      {face:'Top (Z='+n(z,1)+')', component:'<span class="math">τ<sub>zx</sub></span> × <span class="math">V<sub>x</sub></span>', val:n(Vx_integral)}
+    ];
     if (bcType === 'free') {
       const zb = hLow;
         const Vy_bottom = t_zy_val !== 0 ? integrateShearPowerSingle(-t_zy_val, (x,y)=>Vy(x,y,zb), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
         const Vx_bottom = t_zx_val !== 0 ? integrateShearPowerSingle(-t_zx_val, (x,y)=>Vx(x,y,zb), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
       P_shear_top += Vy_bottom + Vx_bottom;
       P_shear_breakdown.push(
-        {face:'Bottom (Z='+n(zb,1)+')', component:'−τ_zy×Vy', val:n(Vy_bottom)},
-        {face:'Bottom (Z='+n(zb,1)+')', component:'−τ_zx×Vx', val:n(Vx_bottom)}
+        {face:'Bottom (Z='+n(zb,1)+')', component:'−<span class="math">τ<sub>zy</sub></span> × <span class="math">V<sub>y</sub></span>', val:n(Vy_bottom)},
+        {face:'Bottom (Z='+n(zb,1)+')', component:'−<span class="math">τ<sub>zx</sub></span> × <span class="math">V<sub>x</sub></span>', val:n(Vx_bottom)}
       );
     }
   } else if (loadDir === 'Y') {
@@ -1454,16 +1555,18 @@ function analyze() {
     const Vz_int = t_yz_val !== 0 ? integrateShearPowerSingle(t_yz_val, (x,z)=>Vz(x,y,z), xLow,xHigh,zLow,zHigh) : 0;
     const Vx_int = t_yx_val !== 0 ? integrateShearPowerSingle(t_yx_val, (x,z)=>Vx(x,y,z), xLow,xHigh,zLow,zHigh) : 0;
     P_shear_top = Vz_int + Vx_int;
-    P_shear_breakdown = [{face:'Top (Y='+n(y,1)+')', component:'τ_yz×Vz', val:n(Vz_int)},
-                         {face:'Top (Y='+n(y,1)+')', component:'τ_yx×Vx', val:n(Vx_int)}];
+    P_shear_breakdown = [
+      {face:'Top (Y='+n(y,1)+')', component:'<span class="math">τ<sub>yz</sub></span> × <span class="math">V<sub>z</sub></span>', val:n(Vz_int)},
+      {face:'Top (Y='+n(y,1)+')', component:'<span class="math">τ<sub>yx</sub></span> × <span class="math">V<sub>x</sub></span>', val:n(Vx_int)}
+    ];
     if (bcType === 'free') {
       const yb = hLow;
       const Vz_bottom = t_yz_val !== 0 ? integrateShearPowerSingle(-t_yz_val, (x,z)=>Vz(x,yb,z), xLow,xHigh,zLow,zHigh) : 0;
       const Vx_bottom = t_yx_val !== 0 ? integrateShearPowerSingle(-t_yx_val, (x,z)=>Vx(x,yb,z), xLow,xHigh,zLow,zHigh) : 0;
       P_shear_top += Vz_bottom + Vx_bottom;
       P_shear_breakdown.push(
-        {face:'Bottom (Y='+n(yb,1)+')', component:'−τ_yz×Vz', val:n(Vz_bottom)},
-        {face:'Bottom (Y='+n(yb,1)+')', component:'−τ_yx×Vx', val:n(Vx_bottom)}
+        {face:'Bottom (Y='+n(yb,1)+')', component:'−<span class="math">τ<sub>yz</sub></span> × <span class="math">V<sub>z</sub></span>', val:n(Vz_bottom)},
+        {face:'Bottom (Y='+n(yb,1)+')', component:'−<span class="math">τ<sub>yx</sub></span> × <span class="math">V<sub>x</sub></span>', val:n(Vx_bottom)}
       );
     }
   } else {
@@ -1472,16 +1575,18 @@ function analyze() {
     const Vz_int = t_xz_val !== 0 ? integrateShearPowerSingle(t_xz_val, (y,z)=>Vz(x,y,z), yLow,yHigh,zLow,zHigh) : 0;
     const Vy_int = t_xy_val !== 0 ? integrateShearPowerSingle(t_xy_val, (y,z)=>Vy(x,y,z), yLow,yHigh,zLow,zHigh) : 0;
     P_shear_top = Vz_int + Vy_int;
-    P_shear_breakdown = [{face:'Top (X='+n(x,1)+')', component:'τ_xz×Vz', val:n(Vz_int)},
-                         {face:'Top (X='+n(x,1)+')', component:'τ_xy×Vy', val:n(Vy_int)}];
+    P_shear_breakdown = [
+      {face:'Top (X='+n(x,1)+')', component:'<span class="math">τ<sub>xz</sub></span> × <span class="math">V<sub>z</sub></span>', val:n(Vz_int)},
+      {face:'Top (X='+n(x,1)+')', component:'<span class="math">τ<sub>xy</sub></span> × <span class="math">V<sub>y</sub></span>', val:n(Vy_int)}
+    ];
     if (bcType === 'free') {
       const xb = hLow;
       const Vz_bottom = t_xz_val !== 0 ? integrateShearPowerSingle(-t_xz_val, (y,z)=>Vz(xb,y,z), yLow,yHigh,zLow,zHigh) : 0;
       const Vy_bottom = t_xy_val !== 0 ? integrateShearPowerSingle(-t_xy_val, (y,z)=>Vy(xb,y,z), yLow,yHigh,zLow,zHigh) : 0;
       P_shear_top += Vz_bottom + Vy_bottom;
       P_shear_breakdown.push(
-        {face:'Bottom (X='+n(xb,1)+')', component:'−τ_xz×Vz', val:n(Vz_bottom)},
-        {face:'Bottom (X='+n(xb,1)+')', component:'−τ_xy×Vy', val:n(Vy_bottom)}
+        {face:'Bottom (X='+n(xb,1)+')', component:'−<span class="math">τ<sub>xz</sub></span> × <span class="math">V<sub>z</sub></span>', val:n(Vz_bottom)},
+        {face:'Bottom (X='+n(xb,1)+')', component:'−<span class="math">τ<sub>xy</sub></span> × <span class="math">V<sub>y</sub></span>', val:n(Vy_bottom)}
       );
     }
   }
@@ -1528,14 +1633,14 @@ function analyze() {
     c:{p1:n(p1),p2:n(p2),p3:n(p3),sigmaMean:n(sm2),devTensor:devTensor.map(r=>r.map(v=>n(v)))},
     d:{center:n(Cc),radius:n(Rc),sig1:n(mohr_sig1),sig2:n(mohr_sig2),tauMax:n(Rc),angle:n(angle2th/2),plane:mohrPlane.label},
     e:{kf_vm:n(kf_vm),kf_tr:n(kf_tr)},
-    f:{tensor:eSR.map(r=>r.map(v=>n(v,5))),principals:[n(pe1),n(pe2),n(pe3)]},
+    f:{tensor:eSR.map(r=>r.map(v=>n(v,5))),principals:[n(pe1),n(pe2),n(pe3)],invariants:{I1:n(eI1,5),I2:n(eI2,6),I3:n(eI3,6)}},
     g:{Vx:vxStr,Vy:vyStr,Vz:vzStr,probe:probeV},
     h:{velocities:velVals},
     i:{P_normal:n(P_normal),P_shear:n(P_shear_top),P_ext:n(P_ext),breakdown:P_shear_breakdown,P_lat:n(P_lat)},
     j:{P_int:n(P_int),density:n(P_int_density)},
     k:{P_principal:n(P_principal)},
     l:{sig_eq:n(sig_eq),eps_eq:n(eps_eq,5)},
-    m:{P_ub:n(P_ub),density:n(P_ub_density,5)},
+    m:{P_ub:n(P_ub),density:n(P_ub_density,5),volume:n(Vol,3),sig_eq:n(sig_eq),eps_eq:n(eps_eq,5)},
     shearFaces
   };
 
@@ -1655,10 +1760,13 @@ function renderResults(R) {
     <div class="result-matrix">${matrixHtml(S, 2)}</div>`;
 
   // (b)
+  const b_poly = `\\lambda^3 - (${R.b.I1})\\lambda^2 + (${R.b.I2})\\lambda - (${R.b.I3}) = 0`;
   document.getElementById('res_b').innerHTML = `
     <div class="result-block"><div class="result-title">I<sub>1</sub> = trace</div><div class="result-val">${R.b.I1}</div></div>
     <div class="result-block"><div class="result-title">I<sub>2</sub></div><div class="result-val">${R.b.I2}</div></div>
     <div class="result-block"><div class="result-title">I<sub>3</sub> = det</div><div class="result-val">${R.b.I3}</div></div>
+    <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Characteristic Polynomial (σ)</div>
+      <div class="result-val">${katexify(b_poly)}</div></div>
     <div class="explain-box">Invariants are independent of coordinate frame rotation — they characterize the stress state intrinsically.</div>`;
 
   // (c)
@@ -1691,11 +1799,18 @@ function renderResults(R) {
 
   // (f)
   const E = R.f.tensor;
+  const f_pr = R.f.principals;
+  const f_inv = R.f.invariants || {};
+  const charPolyF = `λ^3 - (${f_inv.I1})·λ^2 + (${f_inv.I2})·λ - (${f_inv.I3}) = 0`;
   document.getElementById('res_f').innerHTML = `
     <div class="result-matrix">${matrixHtml(E, 4)}</div>
-    <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Principal Strain Rates</div>
-      <div class="result-val">ε̇<sub>1</sub>=${R.f.principals[0]} ε̇<sub>2</sub>=${R.f.principals[1]} ε̇<sub>3</sub>=${R.f.principals[2]}</div></div>
-    <div class="info-pill">∑ε̇ = ${n(R.f.principals.reduce((a,b)=>a+b,0),5)} ≈ 0 (incompressibility)</div>`;
+    <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Strain-rate Invariants</div>
+      <div class="result-val">I<sub>1</sub>=${f_inv.I1} &nbsp; I<sub>2</sub>=${f_inv.I2} &nbsp; I<sub>3</sub>=${f_inv.I3}</div></div>
+    <div class="result-block" style="margin-top:0.45rem;"><div class="result-title">Characteristic Polynomial (ε̇)</div>
+      <div class="result-val">${katexify(charPolyF)}</div></div>
+    <div class="result-block" style="margin-top:0.45rem;"><div class="result-title">Principal Strain Rates</div>
+      <div class="result-val">ε̇<sub>1</sub>=${f_pr[0]} &nbsp; ε̇<sub>2</sub>=${f_pr[1]} &nbsp; ε̇<sub>3</sub>=${f_pr[2]}</div></div>
+    <div class="info-pill">∑ε̇ = ${n(f_pr.reduce((a,b)=>a+b,0),5)} ≈ 0 (incompressibility)</div>`;
 
   // (g)
   document.getElementById('res_g').innerHTML = `
@@ -1717,45 +1832,101 @@ function renderResults(R) {
   // (i) External Power
   const bkd = R.i.breakdown.map(b=>`<div class="check-row">${b.face} · ${b.component} = <strong>${b.val}</strong></div>`).join('');
   document.getElementById('res_i').innerHTML = `
-    <div class="power-summary">
-      <div class="power-box"><div class="val">${R.i.P_normal}</div><div class="lbl">P_compression</div></div>
-      <div class="power-box"><div class="val">${R.i.P_shear}</div><div class="lbl">P_shear (top)</div></div>
-      <div class="power-box" style="background:#FDF0DC;"><div class="val">${R.i.P_ext}</div><div class="lbl">P_external total</div></div>
+    <div class="power-summary" style="grid-template-columns:1fr;gap:0.7rem;">
+      <div class="power-box" style="padding:1rem 0.8rem"><div class="val">${R.i.P_normal}</div><div class="lbl">P_compression</div></div>
+      <div class="power-box" style="padding:1rem 0.8rem"><div class="val">${R.i.P_shear}</div><div class="lbl">P_shear (top)</div></div>
+      <div class="power-box" style="background:#FDF0DC;padding:1rem 0.8rem"><div class="val">${R.i.P_ext}</div><div class="lbl">P_external total</div></div>
     </div>
-    ${bkd}
-    <div style="margin-top:0.6rem;"><div class="result-title">Lateral face shear power</div>
+    <div class="explain-box" style="margin-top:0.9rem;">
+      <div class="result-title" style="margin-bottom:0.55rem;">Formulas</div>
+      <div style="display:grid;gap:0.55rem;">
+        <div>${katexify('P_{normal}=|\\sigma_{nn}|\\,A\\,V_0')}</div>
+        <div>${katexify('P_{shear}=\\int_A \\tau\\,v\\,dA')}</div>
+        <div>${katexify('P_{external}=P_{normal}+P_{shear}')}</div>
+      </div>
+    </div>
+    <div style="margin-top:0.9rem;line-height:1.6">${bkd}</div>
+    <div style="margin-top:0.8rem;"><div class="result-title">Lateral face shear power</div>
       <div class="result-val">${R.i.P_lat} units</div></div>`;
 
   // (j) Internal Power
   document.getElementById('res_j').innerHTML = `
-    <div style="margin-top:0.6rem;"><div class="result-title">(j) Internal power</div>
-      <div class="result-val good">P_int = ${R.j.P_int} &nbsp;(density=${R.j.density}/vol)</div></div>
-    <div class="explain-box">Internal power = deviatoric stress : strain_rate</div>`;
+    <div class="result-block">
+      <div class="result-title">Deviatoric stress tensor</div>
+      <div class="result-val">${katexify('\\sigma^{\\prime}=' + latexMatrix(R.c.devTensor, 3))}</div>
+    </div>
+    <div class="result-block">
+      <div class="result-title">Strain-rate tensor</div>
+      <div class="result-val">${katexify('\\dot{\\varepsilon}=' + latexMatrix(R.f.tensor, 4))}</div>
+    </div>
+    <div class="explain-box">
+      <div class="result-title" style="margin-bottom:0.55rem;">Calculation</div>
+      <div>${katexify('P_{int}=V\\,(\\sigma^{\\prime}:\\dot{\\varepsilon})')}</div>
+      <div style="margin-top:0.45rem;">P_int = <strong>${R.j.P_int}</strong> &nbsp;(density = ${R.j.density}/vol)</div>
+    </div>`;
 
   // (k) Principal Power
+  // show principal stress matrix + principal strain rates + calculation steps
+  const pMat = [[R.c.p1,0,0],[0,R.c.p2,0],[0,0,R.c.p3]];
+  const peVals = R.f.principals || [0,0,0];
+  const vol = R.inputs.L * R.inputs.W * R.inputs.H;
+  const calcSum = `${R.c.p1}·${peVals[0]} + ${R.c.p2}·${peVals[1]} + ${R.c.p3}·${peVals[2]}`;
+  const calcNumeric = n(R.c.p1*peVals[0] + R.c.p2*peVals[1] + R.c.p3*peVals[2],6);
   document.getElementById('res_k').innerHTML = `
-    <div style="margin-top:0.4rem;"><div class="result-title">(k) P via principal × principal strain rate</div>
-      <div class="result-val">${R.k.P_principal}</div></div>
-    <div class="check-row" style="margin-top:0.5rem;font-size:0.78rem;">
-      <span>✓ P_ext ≈ P_int? </span>
-      <span class="badge ${Math.abs(R.i.P_ext-R.j.P_int)<1 ? 'badge-ok':'badge-warn'}">
-        Δ = ${n(Math.abs(R.i.P_ext-R.j.P_int),2)}
-      </span>
-    </div>`;
+    <div style="margin-top:0.4rem;"><div class="result-title">(k) Principal Power — matrix & calculation</div>
+      <div class="result-matrix">${matrixHtml(pMat,3)}</div>
+      <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Principal Strain Rates</div>
+        <div class="result-val">ε̇<sub>1</sub>=${peVals[0]} &nbsp; ε̇<sub>2</sub>=${peVals[1]} &nbsp; ε̇<sub>3</sub>=${peVals[2]}</div></div>
+      <div class="explain-box" style="margin-top:0.6rem;">Calculation: P = Vol × (σ<sub>1</sub>ε̇<sub>1</sub> + σ<sub>2</sub>ε̇<sub>2</sub> + σ<sub>3</sub>ε̇<sub>3</sub>) = ${vol} × (${calcSum}) = <strong>${R.k.P_principal}</strong>
+      <div style="margin-top:0.4rem;">Numeric inner sum = ${calcNumeric}</div></div>
+    </div>
+    `;
 
-  // (l)
-  document.getElementById('res_l').innerHTML = `
-    <div class="highlight-box">
-      <div class="big-num">${R.l.sig_eq}</div>
-      <div class="unit">σ̄ — Equivalent stress (units)</div>
-    </div>
-    <div class="highlight-box" style="margin-top:0.6rem;">
-      <div class="big-num">${R.l.eps_eq}</div>
-      <div class="unit">ε̄̇ — Effective strain rate (s<sup>−1</sup>)</div>
-    </div>
-    <div class="check-row" style="margin-top:0.5rem;font-size:0.78rem;">
-      σ̄·ε̄̇ = ${n(R.l.sig_eq*R.l.eps_eq,4)} &nbsp;≈ density ${R.j.density}
+  // (l) Equivalent Stress & Strain — show calculation steps
+  const p1 = R.c.p1, p2 = R.c.p2, p3 = R.c.p3;
+  const pe1 = (R.f.principals||[0,0,0])[0], pe2 = (R.f.principals||[0,0,0])[1], pe3 = (R.f.principals||[0,0,0])[2];
+  const sigEqLatex = `\\bar{σ} = \\sqrt{\\tfrac{1}{2}\\left[(σ_1-σ_2)^2+(σ_2-σ_3)^2+(σ_3-σ_1)^2\\right]}`;
+  const sigEqNum = `\\bar{σ} = \\sqrt{\\tfrac{1}{2}\\left[(${p1}-${p2})^2+(${p2}-${p3})^2+(${p3}-${p1})^2\\right]}`;
+  const epsEqLatex = `\\dot{\\bar{ε}} = \\sqrt{\\tfrac{2}{3}\\left[\\dot{ε}_1^2+\\dot{ε}_2^2+\\dot{ε}_3^2\\right]}`;
+  const epsEqNum = `\\dot{\\bar{ε}} = \\sqrt{\\tfrac{2}{3}[(${pe1})^2+(${pe2})^2+(${pe3})^2]}`;
+  const res_l_html = `
+    <div class="result-block"><div class="result-title">(l) Equivalent stress — formula</div>
+      <div class="result-val">${katexify(sigEqLatex)}</div></div>
+    <div class="result-block" style="margin-top:0.45rem;"><div class="result-title">Numeric evaluation</div>
+      <div class="result-val" style="font-size:0.8rem;line-height:1.45;">${katexify(sigEqNum)}<br>= ${R.l.sig_eq}</div></div>
+    <div class="result-block" style="margin-top:0.7rem;"><div class="result-title">(l) Effective strain rate — formula</div>
+      <div class="result-val">${katexify(epsEqLatex)}</div></div>
+    <div class="result-block" style="margin-top:0.45rem;"><div class="result-title">Numeric evaluation</div>
+      <div class="result-val" style="font-size:0.8rem;line-height:1.45;">${katexify(epsEqNum)}<br>= ${R.l.eps_eq}</div></div>
+    <div class="explain-box" style="margin-top:0.6rem;">
+      Data used: σ̄ = ${R.l.sig_eq}, ε̄̇ = ${R.l.eps_eq}, Vol = ${R.inputs.L * R.inputs.W * R.inputs.H}
     </div>`;
+  // populate both the top card (`res_l`) and the results-grid duplicate (`res_l_grid`) so (l) appears twice
+  const elTop = document.getElementById('res_l');
+  const elGrid = document.getElementById('res_l_grid');
+  // Top card: concise summary (not labeled '(l)')
+  const res_l_summary = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+      <div class="highlight-box" style="margin-top:0;">
+        <div class="big-num">${R.l.sig_eq}</div>
+        <div class="unit">σ̄ — Equivalent stress</div>
+      </div>
+      <div class="highlight-box" style="margin-top:0;">
+        <div class="big-num">${R.l.eps_eq}</div>
+        <div class="unit">ε̄̇ — Effective strain rate (s<sup>−1</sup>)</div>
+      </div>
+      <div class="highlight-box" style="margin-top:0;">
+        <div class="big-num">${R.j.density}</div>
+        <div class="unit">Total Power per Unit Volume</div>
+      </div>
+      <div class="highlight-box" style="margin-top:0;">
+        <div class="big-num">${vol}</div>
+        <div class="unit">Volume</div>
+      </div>
+    </div>`;
+  if (elTop) elTop.innerHTML = res_l_summary;
+  // Results grid: full (l) detailed steps
+  if (elGrid) elGrid.innerHTML = res_l_html;
 
   // (m)
   document.getElementById('res_m').innerHTML = `
@@ -1763,7 +1934,11 @@ function renderResults(R) {
       <div class="result-val highlight">${R.m.density} units/vol</div></div>
     <div class="result-block"><div class="result-title">P<sub>UB</sub> total = σ̄·ε̄̇·Vol</div>
       <div class="result-val highlight">${R.m.P_ub} units</div></div>
-    <div class="explain-box">Upper bound = σ̄ × ε̄̇ × Volume. The assumed linear velocity field is kinematically admissible ∴ it provides a valid upper bound.</div>`;
+    <div class="explain-box">Upper bound = σ̄ × ε̄̇ × Volume. The assumed linear velocity field is kinematically admissible ∴ it provides a valid upper bound.</div>
+    <div class="explain-box" style="margin-top:0.6rem;">
+      <div class="result-title" style="margin-bottom:0.55rem;">Data used</div>
+      <div>σ̄ = ${R.m.sig_eq}, ε̄̇ = ${R.m.eps_eq}, Vol = ${R.m.volume}</div>
+    </div>`;
 }
 
 // ========================
@@ -1820,6 +1995,11 @@ function renderShearFaces(faces, loadDir) {
 }
 
 function renderFBDInfo(S, loadDir, bcType, L, W, H) {
+  const infoPanel = document.getElementById('fbdInfo');
+  if (!infoPanel) return;
+  const faceLabel = bcType === 'free'
+    ? 'two faces'
+    : (loadDir === 'Z' ? 'top face' : 'opposite face');
   const pairs = [
     {name:'xy/yx', value:(S[0][1] + S[1][0]) / 2, color:'#6B46C1'},
     {name:'xz/zx', value:(S[0][2] + S[2][0]) / 2, color:'#2B6CB0'},
@@ -1830,10 +2010,10 @@ function renderFBDInfo(S, loadDir, bcType, L, W, H) {
     ? active.map(p => `<span><span class="legend-dot" style="background:${p.color}"></span>τ<sub>${p.name}</sub> = ${fmt(p.value,2)}</span>`).join('')
     : '<span>No shear components active</span>';
 
-  document.getElementById('fbdInfo').innerHTML = `
+  infoPanel.innerHTML = `
     <div class="fbd-info-grid">
       <div class="fbd-info-box"><div class="label">Block</div><div class="value">${L} × ${W} × ${H}</div></div>
-      <div class="fbd-info-box"><div class="label">Load</div><div class="value">σ<sub>${loadDir.toLowerCase()}${loadDir.toLowerCase()}</sub>, ${bcType === 'free' ? 'two faces' : 'top face'}</div></div>
+      <div class="fbd-info-box"><div class="label">Load</div><div class="value">σ<sub>${loadDir.toLowerCase()}${loadDir.toLowerCase()}</sub>, ${faceLabel}</div></div>
       <div class="fbd-info-box"><div class="label">Rotate</div><div class="value">drag canvas</div></div>
     </div>
     <div class="legend-list">
@@ -2027,7 +2207,9 @@ function drawFBD(S, loadDir, bcType, L, W, H, bounds) {
 
   // Boundary condition label
   ctx.fillStyle = '#C4661A'; ctx.font = 'bold 12px JetBrains Mono'; ctx.textAlign = 'center';
-  ctx.fillText(bcType === 'fixed' ? '⊘ FIXED BASE' : 'FREE BOTH ENDS', cw/2, ch - 15);
+  ctx.fillText(bcType === 'fixed'
+    ? (loadDir === 'Z' ? '⊘ FIXED BASE' : '⊘ FIXED OPPOSITE FACE')
+    : 'FREE BOTH ENDS', cw/2, ch - 15);
 }
 
 function drawFBDThree(canvas, S, loadDir, bcType, L, W, H) {
@@ -2295,23 +2477,26 @@ function drawMohrCircle(C, R, sigA, sigB, tau, planeLabel) {
   ctx.clearRect(0,0,cw,ch);
 
   const safeR = Math.max(R, 1e-6);
-  const pad = 54;
-  const panelW = Math.min(cw - 2 * pad, ch - 2 * pad) * 1.12;
-  const scale = panelW / (2.55 * safeR);
-  const ox = cw * 0.43 - C * scale;
-  const oy = ch / 2 + 10;
+  const pad = 24;
+  const plotSpan = Math.min(cw - pad * 2, ch - pad * 2);
+  const scale = plotSpan / (2.15 * safeR);
+  const ox = cw * 0.5 - C * scale;
+  const oy = ch * 0.52;
 
   const toX = s => ox + s*scale;
   const toY = t => oy - t*scale;
-  const left = Math.max(24, toX(C - safeR * 1.35));
-  const right = Math.min(cw - 24, toX(C + safeR * 1.35));
-  const top = toY(safeR * 1.35);
-  const bottom = toY(-safeR * 1.35);
+  const left = Math.max(pad, toX(C - safeR * 1.08));
+  const right = Math.min(cw - pad, toX(C + safeR * 1.08));
+  const top = Math.max(pad, toY(safeR * 1.08));
+  const bottom = Math.min(ch - pad, toY(-safeR * 1.08));
 
-  const bg = ctx.createLinearGradient(0, top, 0, bottom);
+  const bg = ctx.createLinearGradient(0, 0, 0, ch);
   bg.addColorStop(0, '#FFF8EE');
   bg.addColorStop(1, '#FFFFFF');
   ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, cw, ch);
+
+  ctx.fillStyle = 'rgba(255,248,238,0.9)';
   ctx.fillRect(left, top, right-left, bottom-top);
 
 
