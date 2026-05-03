@@ -116,7 +116,7 @@ header p {
 .grid-top { display: grid; grid-template-columns: 300px 1.6fr; gap: 1rem; margin-bottom: 1rem; align-items: stretch; }
 .grid-top > .card,
 .grid-top > .viz-stack { height: 100%; }
-.viz-stack { display: grid; grid-template-rows: minmax(380px, 1fr) auto; gap: 1rem; }
+.viz-stack { display: grid; grid-template-rows: auto auto; gap: 1rem; }
 .grid-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
 .grid-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; align-items: stretch; }
 .grid-results > .card { height: 100%; }
@@ -706,7 +706,7 @@ canvas {
     <div class="viz-stack">
       <div class="card">
         <div class="card-title">Free Body Diagram — Workpiece</div>
-        <canvas id="fbd3d" height="380" style="width:100%; display:block;"></canvas>
+        <canvas id="fbd3d" style="width:100%; height:auto; aspect-ratio:16/9; display:block;"></canvas>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">
           <span class="badge badge-warn">■ Normal stress</span>
           <span class="badge badge-ok">■ Shear yz/zy</span>
@@ -2036,7 +2036,7 @@ function drawFBD(S, loadDir, bcType, L, W, H, bounds) {
   const cv = document.getElementById('fbd3d');
   const ctx = cv.getContext('2d');
   cv.width = cv.parentElement.clientWidth || 600;
-  const cw = cv.width, ch = 620;
+  const cw = cv.width, ch = Math.min(cv.parentElement.clientHeight || 620, 700);
   cv.height = ch;
   ctx.clearRect(0,0,cw,ch);
 
@@ -2219,7 +2219,7 @@ function drawFBD(S, loadDir, bcType, L, W, H, bounds) {
 function drawFBDThree(canvas, S, loadDir, bcType, L, W, H) {
   const THREE = window.THREE;
   const cw = canvas.parentElement.clientWidth || 600;
-  const ch = 340;
+  const ch = Math.min(canvas.parentElement.clientHeight || 340, 400);
   canvas.width = cw;
   canvas.height = ch;
 
