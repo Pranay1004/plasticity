@@ -3,11 +3,27 @@
   "name": "upsetting-process-analyzer",
   "builds": [
     {
-      "src": "index.html",
+      "src": "**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.svg",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.ico",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/favicon.svg",
+      "dest": "/favicon.svg"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
     {
       "src": "/(.*)",
       "dest": "/$1"

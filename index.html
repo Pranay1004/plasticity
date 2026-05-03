@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upsetting Process — Stress & Power Analyzer</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="alternate icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<meta name="theme-color" content="#FFF6EC">
+<meta name="description" content="Interactive upsetting process analyzer for stress, strain, and power calculations">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
@@ -1750,14 +1754,14 @@ function renderResults(R) {
   // (a)
   document.getElementById('res_a').innerHTML = `
     <div class="result-title">Raw input tensor</div>
-    <div class="result-matrix">${matrixHtml(raw, 2)}</div>
+    <div class="result-val">${katexify('\\sigma_{raw}=' + latexMatrix(raw, 2))}</div>
     <div class="explain-box" style="margin-top:0.5rem;">
       Normal: <span class="math">σ<sub>${R.inputs.loadDir}${R.inputs.loadDir}</sub> = −${R.inputs.sigN}</span> (compressive).<br>
       Classical power balance uses the symmetric tensor, so the calculation tensor is the average of each off-diagonal pair.<br>
       Raw input is still shown above, which is useful when <span class="math">τ<sub>zy</sub></span> and <span class="math">τ<sub>yz</sub></span> differ.
     </div>
     <div class="result-title" style="margin-top:0.8rem;">Used for calculation (symmetric)</div>
-    <div class="result-matrix">${matrixHtml(S, 2)}</div>`;
+    <div class="result-val">${katexify('\\sigma=' + latexMatrix(S, 2))}</div>`;
 
   // (b)
   const b_poly = `\\lambda^3 - (${R.b.I1})\\lambda^2 + (${R.b.I2})\\lambda - (${R.b.I3}) = 0`;
@@ -1779,9 +1783,9 @@ function renderResults(R) {
     <div class="result-block"><div class="result-title">Hydrostatic σ<sub>m</sub> = I<sub>1</sub>/3</div>
       <div class="result-val">${R.c.sigmaMean}</div></div>
     <div class="result-block"><div class="result-title">Hydrostatic Tensor [σ_H]</div>
-      <div class="result-matrix">${matrixHtml(hydro, 4)}</div></div>
+      <div class="result-val">${katexify('\\sigma_H=' + latexMatrix(hydro, 4))}</div></div>
     <div class="result-block"><div class="result-title">Deviatoric Tensor [S] = [σ] - [σ_H]</div>
-      <div class="result-matrix">${matrixHtml(D, 3)}</div></div>`;
+      <div class="result-val">${katexify('S=' + latexMatrix(D, 3))}</div></div>`;
 
   // (d) — Mohr drawn separately
   document.getElementById('res_d').innerHTML = `
@@ -1803,7 +1807,7 @@ function renderResults(R) {
   const f_inv = R.f.invariants || {};
   const charPolyF = `λ^3 - (${f_inv.I1})·λ^2 + (${f_inv.I2})·λ - (${f_inv.I3}) = 0`;
   document.getElementById('res_f').innerHTML = `
-    <div class="result-matrix">${matrixHtml(E, 4)}</div>
+    <div class="result-val">${katexify('\\dot{\\varepsilon}=' + latexMatrix(E, 4))}</div>
     <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Strain-rate Invariants</div>
       <div class="result-val">I<sub>1</sub>=${f_inv.I1} &nbsp; I<sub>2</sub>=${f_inv.I2} &nbsp; I<sub>3</sub>=${f_inv.I3}</div></div>
     <div class="result-block" style="margin-top:0.45rem;"><div class="result-title">Characteristic Polynomial (ε̇)</div>
@@ -1874,7 +1878,7 @@ function renderResults(R) {
   const calcNumeric = n(R.c.p1*peVals[0] + R.c.p2*peVals[1] + R.c.p3*peVals[2],6);
   document.getElementById('res_k').innerHTML = `
     <div style="margin-top:0.4rem;"><div class="result-title">(k) Principal Power — matrix & calculation</div>
-      <div class="result-matrix">${matrixHtml(pMat,3)}</div>
+      <div class="result-val">${katexify('\\sigma_p=' + latexMatrix(pMat,3))}</div>
       <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Principal Strain Rates</div>
         <div class="result-val">ε̇<sub>1</sub>=${peVals[0]} &nbsp; ε̇<sub>2</sub>=${peVals[1]} &nbsp; ε̇<sub>3</sub>=${peVals[2]}</div></div>
       <div class="explain-box" style="margin-top:0.6rem;">Calculation: P = Vol × (σ<sub>1</sub>ε̇<sub>1</sub> + σ<sub>2</sub>ε̇<sub>2</sub> + σ<sub>3</sub>ε̇<sub>3</sub>) = ${vol} × (${calcSum}) = <strong>${R.k.P_principal}</strong>
