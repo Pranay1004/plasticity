@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upsetting Process — Stress & Power Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+:root {
+  --cream: #FDF6EC;
+  --warm-white: #FFFAF3;
+  --amber: #E8903A;
+  --amber-light: #F5B563;
+  --amber-deep: #C4661A;
+  --rust: #B84C1E;
+  --rust-light: #E07050;
+  --sage: #7A9E7E;
+  --steel: #4A6FA5;
+  --charcoal: #2C2C2C;
+  --mid: #555;
+  --light: #888;
+  --border: #E0C99A;
+  --card-bg: #FFFCF5;
+  --shadow: 0 4px 24px rgba(180,100,40,0.10);
+  --shadow-hover: 0 8px 40px rgba(180,100,40,0.18);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, #2C1A0E 0%, #5C300F 60%, #8B4A18 100%);
+  color: white;
+  padding: 0.5rem 0.4rem 0.4rem;
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.02) 30px, rgba(255,255,255,0.02) 60px);
+}
+header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.02em;
+  position: relative;
+  text-align: center;
+}
+header p {
+  display: none;
+  font-size: 0.95rem;
+  opacity: 0.75;
+  margin-top: 0.4rem;
+  font-weight: 300;
+  position: relative;
+}
+.header-badge {
+  display: none;
+  background: var(--amber);
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2px;
+  margin-top: 0.8rem;
+  position: relative;
+}
+
+/* LAYOUT */
+.app-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+.grid-top { display: grid; grid-template-columns: 320px 1.6fr; gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch; }
+.grid-top > .card,
+.grid-top > .viz-stack { height: 100%; }
+.viz-stack { display: grid; grid-template-rows: minmax(560px, 1fr) auto; gap: 1.5rem; }
+.grid-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.grid-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch; }
+.grid-results > .card { height: 100%; }
+
+/* CARDS */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.4rem;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-hover); }
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--amber-deep);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.6rem;
+}
+.card-title .icon { font-size: 1.1rem; }
+
+/* INPUTS */
+.input-group { margin-bottom: 0.9rem; }
+.input-group label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.input-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+
+input[type="number"], select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  transition: border-color 0.2s;
+}
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+input[type="number"].nonzero { border-color: var(--amber); background: #FFF8EE; }
+
+.quick-cases {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+.case-btn {
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  color: var(--charcoal);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.case-btn.active {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: white;
+}
+
+.mini-label {
+  font-size: 0.7rem;
+  color: var(--light);
+  margin-bottom: 0.2rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* TENSOR GRID */
+.tensor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: var(--border);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  margin-bottom: 0.8rem;
+}
+.tensor-grid input {
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  font-size: 0.82rem;
+}
+.tensor-label {
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--light);
+  text-align: center;
+  margin-bottom: 2px;
+}
+.tensor-header {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 0 4px;
+  margin-bottom: 2px;
+}
+
+/* TOGGLE */
+.toggle-group { display: flex; gap: 0.5rem; margin-bottom: 0.9rem; flex-wrap: wrap; }
+.toggle-btn {
+  padding: 0.35rem 0.8rem;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--mid);
+}
+.toggle-btn.active {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: white;
+}
+.toggle-btn:hover:not(.active) { border-color: var(--amber); color: var(--amber); }
+
+/* BUTTONS */
+.btn {
+  padding: 0.65rem 1.4rem;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+.btn-primary { background: var(--amber-deep); color: white; }
+.btn-primary:hover { background: var(--rust); transform: translateY(-1px); }
+.btn-secondary { background: white; color: var(--amber-deep); border: 1.5px solid var(--amber-deep); }
+.btn-secondary:hover { background: var(--amber-deep); color: white; }
+.btn-sm { padding: 0.4rem 0.9rem; font-size: 0.78rem; }
+
+.btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+
+/* CANVAS */
+canvas {
+  width: 100%;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid var(--border);
+}
+
+/* RESULTS */
+.result-block { margin-bottom: 1rem; }
+.result-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--amber-deep);
+  margin-bottom: 0.4rem;
+}
+.result-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  background: #F5ECD8;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--amber);
+}
+.result-val.highlight { border-left-color: var(--rust); background: #FDEEE8; }
+.result-val.good { border-left-color: var(--sage); background: #EDF4EE; }
+
+.result-matrix {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  background: #F5ECD8;
+  padding: 0.6rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--amber);
+  overflow-x: auto;
+  line-height: 1.7;
+}
+.matrix-bracket {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+.matrix-bracket .bracket {
+  display: flex;
+  align-items: center;
+  font-size: 4.8em;
+  line-height: 0.85;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: var(--charcoal);
+}
+.matrix-rows {
+  display: grid;
+  gap: 0.12rem;
+  align-content: center;
+}
+.matrix-rows span {
+  display: block;
+  white-space: pre;
+}
+
+/* SHEAR TABLE */
+.shear-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.5rem; }
+.shear-table th {
+  background: var(--amber-deep);
+  color: white;
+  padding: 0.4rem 0.6rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: left;
+  font-size: 0.75rem;
+}
+.shear-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+.shear-table tr:nth-child(even) td { background: #FAF2E4; }
+.shear-table tr:last-child td { border-bottom: none; }
+.face-tag {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.face-active { background: #FDE8D4; color: var(--rust); }
+.face-note { background: #EDF4EE; color: var(--sage); }
+
+/* EXPLANATION BOX */
+.explain-box {
+  background: linear-gradient(135deg, #FFF8EE, #FDF0DC);
+  border: 1px solid #E8C88A;
+  border-left: 4px solid var(--amber);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--mid);
+  margin-top: 0.6rem;
+}
+.explain-box strong { color: var(--amber-deep); }
+.explain-box .math {
+  font-family: 'JetBrains Mono', monospace;
+  background: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badge-warn { background: #FDE8D4; color: var(--rust); }
+.badge-ok { background: #EDF4EE; color: var(--sage); }
+.badge-info { background: #E8F0FB; color: var(--steel); }
+
+/* EXPORT */
+.export-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
+.export-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.15s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.export-json { border-color: var(--steel); color: var(--steel); background: white; }
+.export-json:hover { background: var(--steel); color: white; }
+.export-md { border-color: var(--sage); color: var(--sage); background: white; }
+.export-md:hover { background: var(--sage); color: white; }
+.export-txt { border-color: var(--mid); color: var(--mid); background: white; }
+.export-txt:hover { background: var(--mid); color: white; }
+.export-yaml { border-color: var(--amber-deep); color: var(--amber-deep); background: white; }
+.export-yaml:hover { background: var(--amber-deep); color: white; }
+
+/* SECTION DIVIDER */
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--light);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* POWER SUMMARY */
+.power-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+.power-box {
+  text-align: center;
+  padding: 0.8rem 0.5rem;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+}
+.power-box .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--rust);
+}
+.power-box .lbl { font-size: 0.7rem; color: var(--light); margin-top: 0.2rem; }
+
+/* STATUS */
+.status-bar {
+  background: linear-gradient(90deg, #2C1A0E, #5C300F);
+  color: rgba(255,255,255,0.8);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.5rem 2rem;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #7AE07A; display: inline-block; margin-right: 0.4rem; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .grid-top { grid-template-columns: 1fr; }
+  .grid-viz { grid-template-columns: 1fr; }
+  .grid-results { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .grid-results { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.5rem; }
+}
+
+.full-width { grid-column: 1 / -1; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+.info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #EDF4EE;
+  color: var(--sage);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin-top: 0.4rem;
+}
+
+.highlight-box {
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  border: 2px solid var(--amber);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.6rem;
+}
+.highlight-box .big-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--rust);
+  line-height: 1;
+}
+.highlight-box .unit { font-size: 0.85rem; color: var(--mid); }
+
+.check-row { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; margin-top: 0.4rem; }
+.check-icon { font-size: 1rem; }
+
+.mohr-wide canvas { min-height: 430px; }
+.fbd-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.fbd-info-box {
+  background: #F5ECD8;
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 0.65rem 0.75rem;
+  min-height: 58px;
+}
+.fbd-info-box .label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--light);
+}
+.fbd-info-box .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  margin-top: 0.25rem;
+}
+.legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--mid);
+  margin-top: 0.65rem;
+}
+.legend-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: -1px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Upsetting Process</h1>
+  <p>Manufacturing Technology · Metal Forming · Plasticity Theory</p>
+  <span class="header-badge">IIST · M.Tech · Additive & Conventional Manufacturing</span>
+</header>
+
+<div class="status-bar">
+  <span style="display:none;"><span class="status-dot"></span>Live Computation</span>
+  <span id="statusMsg" style="display:none;">Ready — live computation is enabled</span>
+  <div style="margin-left:auto;display:flex;gap:0.8rem;">
+    <button onclick="switchView('analysis')" id="btnAnalysis" class="toggle-btn active" style="padding:0.3rem 0.8rem;font-size:0.75rem;">Analysis</button>
+    <button onclick="switchView('formulas')" id="btnFormulas" class="toggle-btn" style="padding:0.3rem 0.8rem;font-size:0.75rem;">Formulas</button>
+  </div>
+</div>
+
+<div class="app-container">
+
+  <!-- TOP ROW: Inputs + 3D Viz -->
+  <div class="grid-top">
+
+    <!-- INPUT PANEL -->
+    <div class="card">
+      <div class="card-title">Problem Configuration</div>
+
+      <div class="section-label">Workpiece Geometry</div>
+      <div class="input-row3">
+        <div><div class="mini-label">Length (X)</div><input type="number" id="dimL" value="20" oninput="scheduleAnalyze()"></div>
+        <div><div class="mini-label">Width (Y)</div><input type="number" id="dimW" value="20" oninput="scheduleAnalyze()"></div>
+        <div><div class="mini-label">Height (Z)</div><input type="number" id="dimH" value="50" oninput="scheduleAnalyze()"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:0.9rem">Normal Load Direction</div>
+      <div class="toggle-group" id="loadDirGroup">
+        <button class="toggle-btn active" data-dir="Z" onclick="setLoadDir('Z',this)">σ along Z</button>
+        <button class="toggle-btn" data-dir="Y" onclick="setLoadDir('Y',this)">σ along Y</button>
+        <button class="toggle-btn" data-dir="X" onclick="setLoadDir('X',this)">σ along X</button>
+      </div>
+
+      <div class="section-label">Boundary Condition</div>
+      <div class="toggle-group" id="bcGroup">
+        <button class="toggle-btn active" data-bc="fixed" onclick="setBC('fixed',this)">Fixed Bottom</button>
+        <button class="toggle-btn" data-bc="free" onclick="setBC('free',this)">Both Ends</button>
+      </div>
+      <div id="bcExplain" class="explain-box" style="font-size:0.75rem; padding:0.5rem 0.7rem;">
+        <strong>Fixed bottom:</strong> height limits 0 → H. Ram compresses from top only.
+      </div>
+
+      <div class="section-label" style="margin-top:0.9rem">Test Case Quick-Load</div>
+      <div class="input-group quick-cases" id="testCaseButtons">
+        <button class="case-btn active" data-case="q1" onclick="loadTestCase('q1', this)">Q1 fixed: 20×20×50, σ=10, τ=5</button>
+        <button class="case-btn" data-case="case1" onclick="loadTestCase('case1', this)">Q2 both ends: 8×4×2, σ=5, τ=2</button>
+        <button class="case-btn" data-case="case2" onclick="loadTestCase('case2', this)">Q2 top only: 8×4×2, σ=5, τ=2</button>
+      </div>
+
+      <div class="section-label" style="margin-top:0.9rem">Normal Stress Magnitude</div>
+      <div class="input-group">
+        <div class="mini-label">σ (compressive, enter positive)</div>
+        <input type="number" id="sigmaN" value="10" oninput="scheduleAnalyze()">
+      </div>
+
+      <div class="section-label">Ram Velocity</div>
+      <div class="input-group">
+        <div class="mini-label">V (units/s)</div>
+        <input type="number" id="ramVel" value="2" oninput="scheduleAnalyze()"></div>
+
+      <div class="section-label">Stress Tensor Input Mode</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="modeSimple" onclick="setMode('simple')">Simple Shear Input</button>
+        <button class="toggle-btn" id="modeTensor" onclick="setMode('tensor')">Full Tensor</button>
+      </div>
+
+      <!-- SIMPLE MODE -->
+      <div id="simpleMode">
+        <div class="section-label">Shear Stresses (on loaded face)</div>
+        <div class="input-row3">
+          <div><div class="mini-label">τ_zy</div><input type="number" id="t_zy" value="5" oninput="highlightNonZero(this)"></div>
+          <div><div class="mini-label">τ_zx</div><input type="number" id="t_zx" value="0" oninput="highlightNonZero(this)"></div>
+          <div><div class="mini-label">τ_xy</div><input type="number" id="t_xy" value="0" oninput="highlightNonZero(this)"></div>
+        </div>
+        <p style="font-size:0.72rem;color:var(--light);margin-top:0.3rem;">τ_ij = shear on face-i along direction-j. Conjugate pairs auto-applied.</p>
+      </div>
+
+      <!-- TENSOR MODE -->
+      <div id="tensorMode" style="display:none;">
+        <div class="tensor-header">
+          <div class="tensor-label">→x</div>
+          <div class="tensor-label">→y</div>
+          <div class="tensor-label">→z</div>
+        </div>
+        <div class="tensor-grid">
+          <input type="number" id="T_xx" value="0" placeholder="σ_xx" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_xy" value="0" placeholder="τ_xy" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_xz" value="0" placeholder="τ_xz" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_yx" value="0" placeholder="τ_yx" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_yy" value="0" placeholder="σ_yy" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_yz" value="5" placeholder="τ_yz" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_zx" value="0" placeholder="τ_zx" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_zy" value="5" placeholder="τ_zy" oninput="syncFromTensor(); scheduleAnalyze()">
+          <input type="number" id="T_zz" value="-10" placeholder="σ_zz" oninput="syncFromTensor(); scheduleAnalyze()">
+        </div>
+        <p style="font-size:0.72rem;color:var(--light);">Row = face normal direction. Col = stress direction.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="analyze()">Analyze Now</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetDefaults()">Reset</button>
+      </div>
+    </div>
+
+    <!-- 3D VISUALIZATION -->
+    <div class="viz-stack">
+      <div class="card">
+        <div class="card-title">Free Body Diagram — Workpiece</div>
+        <canvas id="fbd3d" height="560" style="width:100%; display:block;"></canvas>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">
+          <span class="badge badge-warn">■ Normal stress</span>
+          <span class="badge badge-ok">■ Shear yz/zy</span>
+          <span class="badge badge-info">■ Shear xz/zx</span>
+          <span class="badge" style="background:#EFE7FF;color:#6B46C1;">■ Shear xy/yx</span>
+          <span style="font-size:0.72rem;color:var(--light);margin-left:auto;align-self:center;">Drag diagram to rotate</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">FBD Stress Marking</div>
+        <div id="fbdInfo">
+          <p style="color:var(--light);font-style:italic;">Live stress-face summary appears here.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SHEAR FACES TABLE — full width -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">Shear Stress on All 6 Faces — Detailed Analysis</div>
+    <div id="shearFacesContent">
+      <p style="color:var(--light);font-style:italic;">Click Analyze to populate.</p>
+    </div>
+  </div>
+
+  <!-- RESULTS ROW 1 -->
+  <div class="grid-results" id="resultsSection" style="display:none;">
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔢</span> (a) Applied Stress Tensor</div>
+      <div id="res_a"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">Σ</span> (b) Stress Invariants</div>
+      <div id="res_b"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⊕</span> (c) Principal & Deviatoric</div>
+      <div id="res_c"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">⊙</span> (d) Mohr's Circle</div>
+      <canvas id="mohrCanvas" height="220" style="margin:0; width:100%; display:block;"></canvas>
+      <div id="res_d" style="padding:0.4rem 0 0 0; font-size:0.8rem; line-height:1.3;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🌊</span> (e) Flow Condition — k_f</div>
+      <div id="res_e"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📈</span> (f) Strain Rate Tensor</div>
+      <div id="res_f"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💨</span> (g) Velocity Field Equations</div>
+      <div id="res_g"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(h) Velocities at Coordinates</div>
+      <div id="res_h"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(i) External Power</div>
+      <div id="res_i"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(j) Internal Power</div>
+      <div id="res_j"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(k) Principal Power</div>
+      <div id="res_k"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(l) Equivalent Stress & Strain</div>
+      <div id="res_l"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">(m) Upper Bound Power</div>
+      <div id="res_m"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="card">
+      <div class="card-title">Export Results</div>
+      <p style="font-size:0.82rem;color:var(--mid);">Save all computed quantities with problem setup and explanations.</p>
+      <div class="export-row">
+        <button class="export-btn export-json" onclick="exportResult('json')">JSON</button>
+        <button class="export-btn export-yaml" onclick="exportResult('yaml')">YAML</button>
+        <button class="export-btn export-md" onclick="exportResult('md')">Markdown</button>
+        <button class="export-btn export-txt" onclick="exportResult('txt')">Plain Text</button>
+      </div>
+      <div id="exportStatus" style="font-size:0.75rem;color:var(--sage);margin-top:0.5rem;"></div>
+    </div>
+
+  </div>
+
+  <input type="hidden" id="probeX" value="0">
+  <input type="hidden" id="probeY" value="0">
+  <input type="hidden" id="probeZ" value="0">
+</div>
+
+<!-- FORMULAS TAB -->
+<div id="formulasPanel" class="app-container" style="display:none; max-width:1200px;">
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title" style="font-size:1.3rem;">Key Equations — Upsetting Process Analysis</div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1rem;">
+      
+      <!-- Column 1 -->
+      <div>
+        <h3 style="color:var(--amber-deep); font-size:1.05rem; margin-bottom:0.6rem;">Stress & Strain Rate</h3>
+        
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>Incompressibility (continuity):</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1.02rem;">
+            ε̇<sub>xx</sub> + ε̇<sub>yy</sub> + ε̇<sub>zz</sub> = 0
+          </div>
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>Levy-Mises flow rule:</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1rem;">
+            ε̇<sub>ij</sub> = λ · S<sub>ij</sub>
+          </div>
+          <div style="font-family:'JetBrains Mono';margin-top:0.3rem; text-align:center;font-size:0.95rem;">
+            If i = j: ε̇<sub>ii</sub> = λ · (σ<sub>ii</sub> − σ<sub>m</sub>)
+          </div>
+          <div style="font-family:'JetBrains Mono';margin-top:0.2rem; text-align:center;font-size:0.95rem;">
+            If i ≠ j: ε̇<sub>ij</sub> = ½(∂v<sub>i</sub>/∂x<sub>j</sub> + ∂v<sub>j</sub>/∂x<sub>i</sub>) = λ · S<sub>ij</sub>
+          </div>
+          where σ<sub>m</sub> = (σ<sub>xx</sub>+σ<sub>yy</sub>+σ<sub>zz</sub>)/3
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>Von Mises yield criterion:</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1rem;">
+            k<sub>f</sub> = √(½·[(σ<sub>1</sub>−σ<sub>2</sub>)² + (σ<sub>2</sub>−σ<sub>3</sub>)² + (σ<sub>3</sub>−σ<sub>1</sub>)²])
+          </div>
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem;">
+          <strong>Mohr's Circle — principal shears:</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1rem;">
+            τ<sub>max</sub> = (σ<sub>1</sub> − σ<sub>3</sub>)/2<br>
+            θ = ½ arctan(2τ/(σ<sub>a</sub>−σ<sub>b</sub>))
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2 -->
+      <div>
+        <h3 style="color:var(--amber-deep); font-size:1.05rem; margin-bottom:0.6rem;">Velocity & Power</h3>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>Linear velocity field:</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:0.95rem;">
+            V<sub>load</sub> = −(V₀/H)·coord<sub>load</sub><br>
+            V<sub>trans</sub> = (V₀/2H)·coord<sub>trans</sub> + γ̇·coord<sub>load</sub><br>
+            where γ̇ = 2·ε̇<sub>trans,load</sub>
+          </div>
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>External power (compression):</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1rem;">
+            P<sub>ext</sub> = σ·A·V + ∫∫<sub>top</sub> τ·V dA
+          </div>
+          A = cross-sectional area (L×W for Z-loading)
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem; margin-bottom:0.8rem;">
+          <strong>Internal power (volume dissipation):</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:1rem;">
+            P<sub>int</sub> = ∫∫∫ σ<sub>ij</sub>·ε̇<sub>ij</sub> dV
+          </div>
+          Deviatoric part only (hydrostatic does no work)
+        </div>
+
+        <div class="explain-box" style="background:#FFF8EE; padding:1rem;">
+          <strong>Equivalent/effective quantities:</strong><br>
+          <div style="font-family:'JetBrains Mono';margin-top:0.4rem; text-align:center;font-size:0.95rem;">
+            σ̄ = √(½·Σ(σ<sub>i</sub>−σ<sub>j</sub>)²)<br>
+            ε̄̇ = √(⅔·Σ(ε̇<sub>i</sub>)²)<br>
+            P<sub>UB</sub> = σ̄·ε̄̇·Volume
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explain-box" style="margin-top:1.5rem; background:linear-gradient(135deg, #FFF3E0, #FFE0B2);">
+      <strong style="color:var(--rust);">How to use this page:</strong><br>
+      Return to the <strong>Analysis</strong> tab to input parameters (geometry, stresses, boundary conditions), and all quantities below will be computed and rendered interactively. Modify any input in real-time and see results update automatically with the velocity field, Mohr's circle, power balance, and equivalence checks.
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// STATE
+// ========================
+let loadDir = 'Z';
+let bcType = 'fixed';
+let inputMode = 'simple';
+let lastResults = null;
+let activeTestCase = 'q1';
+let analyzeTimer = null;
+let fbdYaw = Math.PI / 4;
+let fbdDepth = 0.55;
+
+// ========================
+// VIEW SWITCHING
+// ========================
+function switchView(view) {
+  const analysisPanel = document.querySelector('.app-container');
+  const formulasPanel = document.getElementById('formulasPanel');
+  const btnAnalysis = document.getElementById('btnAnalysis');
+  const btnFormulas = document.getElementById('btnFormulas');
+  
+  if (view === 'analysis') {
+    analysisPanel.style.display = '';
+    formulasPanel.style.display = 'none';
+    btnAnalysis.classList.add('active');
+    btnFormulas.classList.remove('active');
+  } else {
+    analysisPanel.style.display = 'none';
+    formulasPanel.style.display = '';
+    btnAnalysis.classList.remove('active');
+    btnFormulas.classList.add('active');
+  }
+}
+
+// ========================
+// UI CONTROLS
+// ========================
+function setLoadDir(dir, btn) {
+  loadDir = dir;
+  document.querySelectorAll('#loadDirGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  scheduleAnalyze();
+}
+
+function setBC(bc, btn) {
+  bcType = bc;
+  document.querySelectorAll('#bcGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const ex = document.getElementById('bcExplain');
+  if (bc === 'fixed') {
+    ex.innerHTML = '<strong>Fixed bottom:</strong> z limits 0 → H. Use full height in ε̇<sub>load</sub> = −V/H.';
+  } else {
+    ex.innerHTML = '<strong>Both ends:</strong> z limits −H/2 → +H/2. Use half-height h = H/2 in ε̇<sub>load</sub> = −V/h.';
+  }
+  scheduleAnalyze();
+}
+
+function setMode(m) {
+  inputMode = m;
+  document.getElementById('simpleMode').style.display = m === 'simple' ? '' : 'none';
+  document.getElementById('tensorMode').style.display = m === 'tensor' ? '' : 'none';
+  document.getElementById('modeSimple').classList.toggle('active', m === 'simple');
+  document.getElementById('modeTensor').classList.toggle('active', m === 'tensor');
+  scheduleAnalyze();
+}
+
+function highlightNonZero(el) {
+  el.classList.toggle('nonzero', parseFloat(el.value) !== 0);
+  scheduleAnalyze();
+}
+
+function syncFromTensor() {
+  // Auto-enforce symmetry: off-diag pairs
+  const pairs = [['T_xy','T_yx'],['T_xz','T_zx'],['T_yz','T_zy']];
+  // don't auto-enforce, let user control — just highlight nonzero
+  document.querySelectorAll('#tensorMode input').forEach(inp => {
+    inp.classList.toggle('nonzero', parseFloat(inp.value) !== 0);
+  });
+  scheduleAnalyze();
+}
+
+function resetDefaults() {
+  loadDir = 'Z';
+  bcType = 'fixed';
+  document.querySelectorAll('#loadDirGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#loadDirGroup [data-dir="Z"]').classList.add('active');
+  document.querySelectorAll('#bcGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#bcGroup [data-bc="fixed"]').classList.add('active');
+  document.getElementById('bcExplain').innerHTML = '<strong>Fixed bottom:</strong> height limits 0 → H. Ram compresses from top only.';
+  document.getElementById('dimL').value = 20;
+  document.getElementById('dimW').value = 20;
+  document.getElementById('dimH').value = 50;
+  document.getElementById('sigmaN').value = 10;
+  document.getElementById('ramVel').value = 2;
+  document.getElementById('t_zy').value = 5;
+  document.getElementById('t_zx').value = 0;
+  document.getElementById('t_xy').value = 0;
+  document.getElementById('probeX').value = 0;
+  document.getElementById('probeY').value = 0;
+  document.getElementById('probeZ').value = 0;
+  document.querySelectorAll('#simpleMode input').forEach(inp => highlightNonZero(inp));
+  setMode('simple');
+  activeTestCase = 'q1';
+  document.querySelectorAll('#testCaseButtons .case-btn').forEach(b => b.classList.toggle('active', b.dataset.case === 'q1'));
+  scheduleAnalyze();
+}
+
+function scheduleAnalyze() {
+  clearTimeout(analyzeTimer);
+  analyzeTimer = setTimeout(() => {
+    if (document.readyState === 'complete') analyze();
+  }, 80);
+}
+
+// ========================
+// MATH HELPERS
+// ========================
+function eig3x3Sym(a) {
+  // Eigenvalues of 3x3 symmetric matrix via characteristic polynomial
+  const p1 = a[0][1]**2 + a[0][2]**2 + a[1][2]**2;
+  if (p1 < 1e-10) return [a[0][0], a[1][1], a[2][2]].sort((x,y)=>y-x);
+  const q = (a[0][0]+a[1][1]+a[2][2])/3;
+  const p2 = (a[0][0]-q)**2 + (a[1][1]-q)**2 + (a[2][2]-q)**2 + 2*p1;
+  const p = Math.sqrt(p2/6);
+  const B = [[( a[0][0]-q)/p, a[0][1]/p, a[0][2]/p],
+              [a[1][0]/p,     (a[1][1]-q)/p, a[1][2]/p],
+              [a[2][0]/p,      a[2][1]/p,   (a[2][2]-q)/p]];
+  let r = (det3(B))/2;
+  r = Math.max(-1, Math.min(1, r));
+  const phi = Math.acos(r)/3;
+  const e1 = q + 2*p*Math.cos(phi);
+  const e3 = q + 2*p*Math.cos(phi + 2*Math.PI/3);
+  const e2 = 3*q - e1 - e3;
+  return [e1, e2, e3].sort((x,y)=>y-x);
+}
+
+function det3(m) {
+  return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+        -m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+        +m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+}
+
+function n(v, d=4) { return parseFloat(v.toFixed(d)); }
+function fmt(v, d=3) {
+  if (Math.abs(v) < 1e-9) return '0';
+  return parseFloat(v.toFixed(d)).toString();
+}
+
+function axisIndex(axis) {
+  return {X: 0, Y: 1, Z: 2}[axis];
+}
+
+function axisLength(axis, L, W, H) {
+  return {X: L, Y: W, Z: H}[axis];
+}
+
+function flowLength(axis, L, W, H, bcType) {
+  const full = axisLength(axis, L, W, H);
+  return bcType === 'free' ? full / 2 : full;
+}
+
+function getBounds(L, W, H, loadDir, bcType) {
+  const span = {X: L, Y: W, Z: H};
+  const bounds = {};
+  ['X', 'Y', 'Z'].forEach(axis => {
+    const size = span[axis];
+    bounds[axis] = axis === loadDir
+      ? (bcType === 'fixed' ? [0, size] : [-size / 2, size / 2])
+      : [-size / 2, size / 2];
+  });
+  return bounds;
+}
+
+function symmetrizeTensor(T) {
+  return T.map((row, i) => row.map((value, j) => (value + T[j][i]) / 2));
+}
+
+function pointInBounds(point, bounds) {
+  return ['X', 'Y', 'Z'].every(axis => {
+    const idx = axisIndex(axis);
+    return point[idx] >= bounds[axis][0] && point[idx] <= bounds[axis][1];
+  });
+}
+
+function representativeCoords(bounds, loadDir) {
+  const loadMid = (bounds[loadDir][0] + bounds[loadDir][1]) / 2;
+  const transAxes = ['X', 'Y', 'Z'].filter(axis => axis !== loadDir);
+  const t1 = transAxes[0];
+  const t2 = transAxes[1];
+  const t1Mid = (bounds[t1][0] + bounds[t1][1]) / 2;
+  const t2Mid = (bounds[t2][0] + bounds[t2][1]) / 2;
+  // Use 80% of max bounds to stay well within range
+  const t1Bound = bounds[t1][0] + 0.8 * (bounds[t1][1] - bounds[t1][0]);
+  const t2Bound = bounds[t2][0] + 0.8 * (bounds[t2][1] - bounds[t2][0]);
+  const loadBound = bounds[loadDir][0] + 0.8 * (bounds[loadDir][1] - bounds[loadDir][0]);
+  return [
+    [loadMid, t1Mid, t2Mid],
+    [loadBound, t1Mid, t2Mid],
+    [loadMid, t1Bound, t2Bound],
+  ];
+}
+
+function velocityProbeCoords(bounds) {
+  if (activeTestCase === 'q1') {
+    return [[0,0,0], [0,0,5], [10,10,20]];
+  }
+  if (activeTestCase === 'case1' || activeTestCase === 'case2') {
+    return [[0,0,0], [0,2,0], [0,2,1], [4,0,0], [4,2,1]];
+  }
+  return representativeCoords(bounds, loadDir);
+}
+
+function activeMohrPlane(S, loadIndex) {
+  const axes = ['X', 'Y', 'Z'];
+  const candidates = [0, 1, 2]
+    .filter(i => i !== loadIndex)
+    .map(i => {
+      const tau = S[i][loadIndex];
+      const c = (S[i][i] + S[loadIndex][loadIndex]) / 2;
+      const r = Math.sqrt(((S[i][i] - S[loadIndex][loadIndex]) / 2) ** 2 + tau ** 2);
+      return { transIndex: i, loadIndex, tau, center: c, radius: r, label: `${axes[i]}-${axes[loadIndex]}` };
+    });
+  return candidates.sort((a, b) => Math.abs(b.tau) - Math.abs(a.tau) || b.radius - a.radius)[0];
+}
+
+function prettyTau(i, j) {
+  return `τ<sub>${'xyz'[i]}${'xyz'[j]}</sub>`;
+}
+
+function formatStressLabel(label) {
+  return label
+    .replace(/sigma_/g, 'σ<sub>')
+    .replace(/tau_/g, 'τ<sub>')
+    .replace(/epsilon_dot_/g, 'ε̇<sub>')
+    .replace(/_([xyz123m])/g, '<sub>$1</sub>')
+    .replace(/\^2/g, '<sup>2</sup>');
+}
+
+function matrixHtml(T, digits = 2) {
+  const rows = T.map(row => `<span>${row.map(v => fmt(v, digits)).join('   ')}</span>`).join('');
+  return `<div class="matrix-bracket"><span class="bracket">[</span><span class="matrix-rows">${rows}</span><span class="bracket">]</span></div>`;
+}
+
+// ========================
+// TEST CASE LOADER
+// ========================
+function loadTestCase(caseVal, btn) {
+  if (!caseVal) return;
+  activeTestCase = caseVal;
+  document.querySelectorAll('#testCaseButtons .case-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  
+  if (caseVal === 'q1') {
+    // Q1 from upsetting_solution.md: fixed bottom, 20×20×50, σzz=10, τzy=5, V=2.
+    document.getElementById('dimL').value = 20;
+    document.getElementById('dimW').value = 20;
+    document.getElementById('dimH').value = 50;
+    document.getElementById('sigmaN').value = 10;
+    document.getElementById('ramVel').value = 2;
+    document.getElementById('t_zy').value = 5;
+    document.getElementById('t_zx').value = 0;
+    document.getElementById('t_xy').value = 0;
+    if (loadDir !== 'Z') setLoadDir('Z', document.querySelector('#loadDirGroup [data-dir="Z"]'));
+    if (bcType !== 'fixed') setBC('fixed', document.querySelector('#bcGroup [data-bc="fixed"]'));
+  } else if (caseVal === 'case1') {
+    // Case 1: 2l=8, 2b=4, 2h=2; compression from both sides.
+    document.getElementById('dimL').value = 8;
+    document.getElementById('dimW').value = 4;
+    document.getElementById('dimH').value = 2;
+    document.getElementById('sigmaN').value = 5;
+    document.getElementById('ramVel').value = 1;
+    document.getElementById('t_zy').value = 2;
+    document.getElementById('t_zx').value = 0;
+    document.getElementById('t_xy').value = 0;
+    // Set Z-axis loading
+    if (loadDir !== 'Z') setLoadDir('Z', document.querySelector('#loadDirGroup [data-dir="Z"]'));
+    if (bcType !== 'free') setBC('free', document.querySelector('#bcGroup [data-bc="free"]'));
+  } else if (caseVal === 'case2') {
+    // Case 2: same block/load as Case 1, but compression from top only.
+    document.getElementById('dimL').value = 8;
+    document.getElementById('dimW').value = 4;
+    document.getElementById('dimH').value = 2;
+    document.getElementById('sigmaN').value = 5;
+    document.getElementById('ramVel').value = 1;
+    document.getElementById('t_zy').value = 2;
+    document.getElementById('t_zx').value = 0;
+    document.getElementById('t_xy').value = 0;
+    // Set Z-axis loading
+    if (loadDir !== 'Z') setLoadDir('Z', document.querySelector('#loadDirGroup [data-dir="Z"]'));
+    if (bcType !== 'fixed') setBC('fixed', document.querySelector('#bcGroup [data-bc="fixed"]'));
+  }
+  
+  // Auto-run analysis
+  analyze();
+}
+
+// ========================
+// MAIN ANALYSIS
+// ========================
+function analyze() {
+  document.getElementById('statusMsg').textContent = 'Computing...';
+
+  const L = parseFloat(document.getElementById('dimL').value);
+  const W = parseFloat(document.getElementById('dimW').value);
+  const H = parseFloat(document.getElementById('dimH').value);
+  const sigN = parseFloat(document.getElementById('sigmaN').value);
+  const V0 = parseFloat(document.getElementById('ramVel').value);
+  const bounds = getBounds(L, W, H, loadDir, bcType);
+  const probePoint = [
+    parseFloat(document.getElementById('probeX').value),
+    parseFloat(document.getElementById('probeY').value),
+    parseFloat(document.getElementById('probeZ').value),
+  ];
+  const probeOk = pointInBounds(probePoint, bounds);
+
+  // Build stress tensor
+  let Sraw = [[0,0,0],[0,0,0],[0,0,0]];
+  // xi: 0=X,1=Y,2=Z
+  const dirIdx = {X:0,Y:1,Z:2};
+  const ld = dirIdx[loadDir];
+
+  if (inputMode === 'simple') {
+    Sraw[ld][ld] = -sigN;
+    const t_zy = parseFloat(document.getElementById('t_zy').value);
+    const t_zx = parseFloat(document.getElementById('t_zx').value);
+    const t_xy = parseFloat(document.getElementById('t_xy').value);
+
+    // Map generic inputs to actual tensor based on loadDir
+    // In simple mode: zy=shear on loaded face along cross-dim1, zx=along cross-dim2
+    if (loadDir === 'Z') {
+      Sraw[2][1] = t_zy; Sraw[1][2] = t_zy;
+      Sraw[2][0] = t_zx; Sraw[0][2] = t_zx;
+      Sraw[0][1] = t_xy; Sraw[1][0] = t_xy;
+    } else if (loadDir === 'Y') {
+      Sraw[1][2] = t_zy; Sraw[2][1] = t_zy;
+      Sraw[1][0] = t_zx; Sraw[0][1] = t_zx;
+      Sraw[0][2] = t_xy; Sraw[2][0] = t_xy;
+    } else {
+      Sraw[0][2] = t_zy; Sraw[2][0] = t_zy;
+      Sraw[0][1] = t_zx; Sraw[1][0] = t_zx;
+      Sraw[1][2] = t_xy; Sraw[2][1] = t_xy;
+    }
+  } else {
+    const ids = ['xx','xy','xz','yx','yy','yz','zx','zy','zz'];
+    const v = ids.map(id => parseFloat(document.getElementById('T_'+id).value));
+    Sraw = [[v[0],v[1],v[2]],[v[3],v[4],v[5]],[v[6],v[7],v[8]]];
+  }
+
+  const S = symmetrizeTensor(Sraw);
+
+  // GEOMETRY for integration
+  const xLow = bounds.X[0], xHigh = bounds.X[1];
+  const yLow = bounds.Y[0], yHigh = bounds.Y[1];
+  const zLow = bounds.Z[0], zHigh = bounds.Z[1];
+  const halfL = L/2, halfW = W/2;
+  const hLow  = bounds[loadDir][0];
+  const hHigh = bounds[loadDir][1];
+  const hTop  = hHigh; // loaded face coordinate
+
+  const transAxes = ['X', 'Y', 'Z'].filter(axis => axis !== loadDir);
+  const loadCoord = (x, y, z) => ({X: x, Y: y, Z: z}[loadDir]);
+  const t1Axis = transAxes[0];
+  const t2Axis = transAxes[1];
+  const t1Coord = (x, y, z) => ({X: x, Y: y, Z: z}[t1Axis]);
+  const t2Coord = (x, y, z) => ({X: x, Y: y, Z: z}[t2Axis]);
+
+  // Strain rates from volume constancy + velocity gradients
+  // Normal strain rate along load direction
+  const Hflow = flowLength(loadDir, L, W, H, bcType);
+  const eN = -V0/Hflow;
+  // Transverse strain rates: split equally
+  const eT = -eN/2;
+
+  // Strain rate tensor components
+  const eSR = [[0,0,0],[0,0,0],[0,0,0]];
+  // Normal components
+  if (loadDir === 'Z') {
+    eSR[2][2] = eN; eSR[0][0] = eT; eSR[1][1] = eT;
+  } else if (loadDir === 'Y') {
+    eSR[1][1] = eN; eSR[0][0] = eT; eSR[2][2] = eT;
+  } else {
+    eSR[0][0] = eN; eSR[1][1] = eT; eSR[2][2] = eT;
+  }
+
+  // Shear strain rates via Lévy-Mises: ε̇_ij = λ * S_ij (deviatoric)
+  const I1 = S[0][0]+S[1][1]+S[2][2];
+  const sm = I1/3;
+  const Dev = S.map((row,i)=>row.map((v,j)=> v - (i===j?sm:0)));
+  // Determine lambda from normal component
+  const SN = Dev[ld][ld];
+  const lam = Math.abs(SN) > 1e-10 ? eN/SN : 0;
+  for (let i=0;i<3;i++) for (let j=0;j<3;j++) {
+    if (i!==j) eSR[i][j] = lam * Dev[i][j];
+  }
+
+  const shearLoad1 = S[ld][axisIndex(t1Axis)];
+  const shearLoad2 = S[ld][axisIndex(t2Axis)];
+
+  // Velocity field functions - based on solution.md logic
+  // V_load = -V0/H_load * coord_load
+  // V_trans1 = +V0/(2H_load) * coord_trans1 + (γ̇_shear1) * coord_load
+  // V_trans2 = +V0/(2H_load) * coord_trans2 + (γ̇_shear2) * coord_load
+  // where γ̇_shear = 2 * eSR[trans][load] (engineering shear strain rate)
+  
+  // For Z-loading: Vx = V0/(2H)*x + γ̇_xz*z, Vy = V0/(2H)*y + γ̇_yz*z, Vz = -V0/H*z
+  // For Y-loading: Vx = V0/(2H)*x + γ̇_xy*y, Vz = V0/(2H)*z + γ̇_zy*y, Vy = -V0/H*y
+  // For X-loading: Vy = V0/(2H)*y + γ̇_xy*x, Vz = V0/(2H)*z + γ̇_xz*x, Vx = -V0/H*x
+
+  const Vx = (x,y,z) => {
+    if (loadDir === 'X') {
+      // X is load dir: Vx = -V0/L * x
+      return eSR[0][0]*x;
+    }
+    // X is transverse: Vx = +V0/(2H_load) * x + shear_term * load_coord
+    const loadCoordVal = loadCoord(x,y,z);
+    // Shear term: γ̇ = 2*eSR[x][load]
+    const shearTerm = 2*eSR[0][ld];
+    return eT*x + shearTerm*loadCoordVal;
+  };
+  
+  const Vy = (x,y,z) => {
+    if (loadDir === 'Y') {
+      // Y is load dir: Vy = -V0/W * y
+      return eSR[1][1]*y;
+    }
+    // Y is transverse: Vy = +V0/(2H_load) * y + shear_term * load_coord
+    const loadCoordVal = loadCoord(x,y,z);
+    const shearTerm = 2*eSR[1][ld];
+    return eT*y + shearTerm*loadCoordVal;
+  };
+  
+  const Vz = (x,y,z) => {
+    if (loadDir === 'Z') {
+      // Z is load dir: Vz = -V0/H * z
+      return eSR[2][2]*z;
+    }
+    // Z is transverse: Vz = +V0/(2H_load) * z + shear_term * load_coord
+    const loadCoordVal = loadCoord(x,y,z);
+    const shearTerm = 2*eSR[2][ld];
+    return eT*z + shearTerm*loadCoordVal;
+  };
+
+  // =====================
+  // (a) STRESS TENSOR
+  // =====================
+  const res_a = `[ σ ] =\n` +
+    `  [${fmt(S[0][0],2)}  ${fmt(S[0][1],2)}  ${fmt(S[0][2],2)}]\n` +
+    `  [${fmt(S[1][0],2)}  ${fmt(S[1][1],2)}  ${fmt(S[1][2],2)}]\n` +
+    `  [${fmt(S[2][0],2)}  ${fmt(S[2][1],2)}  ${fmt(S[2][2],2)}]`;
+
+  // =====================
+  // (b) INVARIANTS
+  // =====================
+  const I2 = S[0][0]*S[1][1]+S[1][1]*S[2][2]+S[2][2]*S[0][0]
+            -S[0][1]**2-S[1][2]**2-S[0][2]**2;
+  const I3 = det3(S);
+
+  // =====================
+  // (c) PRINCIPAL STRESSES
+  // =====================
+  const principals = eig3x3Sym(S);
+  const [p1,p2,p3] = principals;
+  const sm2 = I1/3;
+  const devTensor = S.map((row,i)=>row.map((v,j)=> v-(i===j?sm2:0)));
+
+  // =====================
+  // (d) MOHR'S CIRCLE (active plane)
+  // =====================
+  const mohrPlane = activeMohrPlane(S, ld);
+  const sigA = S[mohrPlane.transIndex][mohrPlane.transIndex];
+  const sigB = S[ld][ld];
+  const tAB = mohrPlane.tau;
+  const Cc = mohrPlane.center;
+  const Rc = mohrPlane.radius;
+  const mohr_sig1 = Cc+Rc, mohr_sig2 = Cc-Rc;
+  const angle2th = Math.atan2(2*Math.abs(tAB), Math.abs(sigA-sigB))*180/Math.PI;
+
+  // =====================
+  // (e) FLOW CONDITION
+  // =====================
+  const ds12=p1-p2, ds23=p2-p3, ds31=p3-p1;
+  const kf_vm = Math.sqrt(0.5*(ds12**2+ds23**2+ds31**2));
+  const kf_tr = Math.max(Math.abs(ds12),Math.abs(ds23),Math.abs(ds31));
+
+  // =====================
+  // (f) STRAIN RATES
+  // =====================
+  // Principal strain rates: eigenvalues of eSR
+  const pe = eig3x3Sym(eSR);
+
+  // =====================
+  // (g) VELOCITY FIELD
+  // =====================
+  // Build string based on user specification:
+  // V_load = -V0/H_load * coord_load
+  // V_trans = +V0/(2H_load) * coord_trans + (γ̇_shear) * coord_load
+  const vxTerms = [];
+  const vyTerms = [];
+  const vzTerms = [];
+
+  // Normal strain rate terms
+  if (loadDir === 'X') {
+    vxTerms.push(`${fmt(eSR[0][0])}·x`);
+    vyTerms.push(`${fmt(eT)}·y`);
+    vzTerms.push(`${fmt(eT)}·z`);
+    // Shear term: γ̇ = 2*eSR[0][1] for xy, 2*eSR[0][2] for xz
+    if (Math.abs(eSR[0][1])>1e-10) vyTerms.push(`${fmt(2*eSR[0][1])}·x`);
+    if (Math.abs(eSR[0][2])>1e-10) vzTerms.push(`${fmt(2*eSR[0][2])}·x`);
+  } else if (loadDir === 'Y') {
+    vxTerms.push(`${fmt(eT)}·x`);
+    vyTerms.push(`${fmt(eSR[1][1])}·y`);
+    vzTerms.push(`${fmt(eT)}·z`);
+    if (Math.abs(eSR[1][0])>1e-10) vxTerms.push(`${fmt(2*eSR[1][0])}·y`);
+    if (Math.abs(eSR[1][2])>1e-10) vzTerms.push(`${fmt(2*eSR[1][2])}·y`);
+  } else {
+    vxTerms.push(`${fmt(eT)}·x`);
+    vyTerms.push(`${fmt(eT)}·y`);
+    vzTerms.push(`${fmt(eSR[2][2])}·z`);
+    if (Math.abs(eSR[2][0])>1e-10) vxTerms.push(`${fmt(2*eSR[2][0])}·z`);
+    if (Math.abs(eSR[2][1])>1e-10) vyTerms.push(`${fmt(2*eSR[2][1])}·z`);
+  }
+
+  const vxStr = vxTerms.length ? vxTerms.join(' + ') : '0';
+  const vyStr = vyTerms.length ? vyTerms.join(' + ') : '0';
+  const vzStr = vzTerms.length ? vzTerms.join(' + ') : '0';
+
+  // =====================
+  // (h) VELOCITIES AT COORDS
+  // =====================
+  const coords = velocityProbeCoords(bounds);
+  const velVals = coords.map(([x,y,z])=>({
+    coord:`(${x},${y},${z})`,
+    Vx:n(Vx(x,y,z)),Vy:n(Vy(x,y,z)),Vz:n(Vz(x,y,z))
+  }));
+
+  // =====================
+  // POWER CALCULATIONS
+  // =====================
+  // Area of loaded face depends on load direction
+  let A_top;
+  if (loadDir === 'Z') { A_top = L*W; }
+  else if (loadDir === 'Y') { A_top = L*H; }
+  else { A_top = W*H; }  // X-loading
+  // Limits for loaded dimension
+  const loadedHigh = hHigh;
+  const loadedLow  = hLow;
+
+  // Power due to normal compression
+  const normalFaceCount = bcType === 'free' ? 2 : 1;
+  const P_normal = normalFaceCount * Math.abs(S[ld][ld]) * A_top * V0;
+
+  // Shear powers — integrate over loaded face
+  // Loaded face at coord = loadedHigh along load direction
+  // Transverse coords: x from -L/2 to L/2, y from -W/2 to W/2
+  const faceXLow = bounds.X[0], faceXHigh = bounds.X[1];
+  const faceYLow = bounds.Y[0], faceYHigh = bounds.Y[1];
+
+  // On top face (z=loadedHigh, if loadDir=Z):
+  // P_zy = ∫∫ τ_zy * Vy(x,y,z=loadedHigh) dx dy
+  // P_zx = ∫∫ τ_zx * Vx(x,y,z=loadedHigh) dx dy
+
+  let P_shear_top, P_shear_breakdown;
+  if (loadDir === 'Z') {
+    const z = hHigh;
+    // τ_zy acts on Z face → Vy; τ_zx acts on Z face → Vx
+    const t_zy_val = S[2][1], t_zx_val = S[2][0];
+    // ∫∫ τ_zy * Vy dx dy, Vy at z=hHigh
+    const Vy_integral = (t_zy_val !== 0) ? integrateShearPowerSingle(t_zy_val, (x,y)=>Vy(x,y,z), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
+    const Vx_integral = (t_zx_val !== 0) ? integrateShearPowerSingle(t_zx_val, (x,y)=>Vx(x,y,z), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
+    P_shear_top = Vy_integral + Vx_integral;
+    P_shear_breakdown = [{face:'Top (Z='+n(z,1)+')', component:'τ_zy×Vy', val:n(Vy_integral)},
+                         {face:'Top (Z='+n(z,1)+')', component:'τ_zx×Vx', val:n(Vx_integral)}];
+    if (bcType === 'free') {
+      const zb = hLow;
+        const Vy_bottom = t_zy_val !== 0 ? integrateShearPowerSingle(-t_zy_val, (x,y)=>Vy(x,y,zb), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
+        const Vx_bottom = t_zx_val !== 0 ? integrateShearPowerSingle(-t_zx_val, (x,y)=>Vx(x,y,zb), faceXLow,faceXHigh,faceYLow,faceYHigh) : 0;
+      P_shear_top += Vy_bottom + Vx_bottom;
+      P_shear_breakdown.push(
+        {face:'Bottom (Z='+n(zb,1)+')', component:'−τ_zy×Vy', val:n(Vy_bottom)},
+        {face:'Bottom (Z='+n(zb,1)+')', component:'−τ_zx×Vx', val:n(Vx_bottom)}
+      );
+    }
+  } else if (loadDir === 'Y') {
+    const y = hHigh;
+    const t_yz_val = S[1][2], t_yx_val = S[1][0];
+    const Vz_int = t_yz_val !== 0 ? integrateShearPowerSingle(t_yz_val, (x,z)=>Vz(x,y,z), xLow,xHigh,zLow,zHigh) : 0;
+    const Vx_int = t_yx_val !== 0 ? integrateShearPowerSingle(t_yx_val, (x,z)=>Vx(x,y,z), xLow,xHigh,zLow,zHigh) : 0;
+    P_shear_top = Vz_int + Vx_int;
+    P_shear_breakdown = [{face:'Top (Y='+n(y,1)+')', component:'τ_yz×Vz', val:n(Vz_int)},
+                         {face:'Top (Y='+n(y,1)+')', component:'τ_yx×Vx', val:n(Vx_int)}];
+    if (bcType === 'free') {
+      const yb = hLow;
+      const Vz_bottom = t_yz_val !== 0 ? integrateShearPowerSingle(-t_yz_val, (x,z)=>Vz(x,yb,z), xLow,xHigh,zLow,zHigh) : 0;
+      const Vx_bottom = t_yx_val !== 0 ? integrateShearPowerSingle(-t_yx_val, (x,z)=>Vx(x,yb,z), xLow,xHigh,zLow,zHigh) : 0;
+      P_shear_top += Vz_bottom + Vx_bottom;
+      P_shear_breakdown.push(
+        {face:'Bottom (Y='+n(yb,1)+')', component:'−τ_yz×Vz', val:n(Vz_bottom)},
+        {face:'Bottom (Y='+n(yb,1)+')', component:'−τ_yx×Vx', val:n(Vx_bottom)}
+      );
+    }
+  } else {
+    const x = hHigh;
+    const t_xz_val = S[0][2], t_xy_val = S[0][1];
+    const Vz_int = t_xz_val !== 0 ? integrateShearPowerSingle(t_xz_val, (y,z)=>Vz(x,y,z), yLow,yHigh,zLow,zHigh) : 0;
+    const Vy_int = t_xy_val !== 0 ? integrateShearPowerSingle(t_xy_val, (y,z)=>Vy(x,y,z), yLow,yHigh,zLow,zHigh) : 0;
+    P_shear_top = Vz_int + Vy_int;
+    P_shear_breakdown = [{face:'Top (X='+n(x,1)+')', component:'τ_xz×Vz', val:n(Vz_int)},
+                         {face:'Top (X='+n(x,1)+')', component:'τ_xy×Vy', val:n(Vy_int)}];
+    if (bcType === 'free') {
+      const xb = hLow;
+      const Vz_bottom = t_xz_val !== 0 ? integrateShearPowerSingle(-t_xz_val, (y,z)=>Vz(xb,y,z), yLow,yHigh,zLow,zHigh) : 0;
+      const Vy_bottom = t_xy_val !== 0 ? integrateShearPowerSingle(-t_xy_val, (y,z)=>Vy(xb,y,z), yLow,yHigh,zLow,zHigh) : 0;
+      P_shear_top += Vz_bottom + Vy_bottom;
+      P_shear_breakdown.push(
+        {face:'Bottom (X='+n(xb,1)+')', component:'−τ_xz×Vz', val:n(Vz_bottom)},
+        {face:'Bottom (X='+n(xb,1)+')', component:'−τ_xy×Vy', val:n(Vy_bottom)}
+      );
+    }
+  }
+
+  const P_ext = P_normal + P_shear_top;
+
+  // Vertical face power (lateral face integration)
+  const P_lat = computeLateralPower(S, eSR, loadDir, L, W, H, hLow, hHigh, xLow, xHigh, yLow, yHigh, Vx, Vy, Vz);
+
+  // Internal power
+  let P_int_density = 0;
+  // internal power = deviatoric stress : strain_rate (double contraction)
+  for (let i=0;i<3;i++) for (let j=0;j<3;j++) P_int_density += devTensor[i][j]*eSR[i][j];
+  const Vol = L*W*H;
+  const P_int = P_int_density * Vol;
+
+  // Power by principal stress × principal strain rate
+  const [pe1,pe2,pe3] = pe;
+  const P_principal = Vol * (p1*pe1 + p2*pe2 + p3*pe3);
+
+  // Equivalent stress & strain rate
+  const sig_eq = kf_vm;
+  const eps_eq = Math.sqrt(2/3*(pe1**2+pe2**2+pe3**2));
+
+  // Upper bound
+  const P_ub_density = sig_eq * eps_eq;
+  const P_ub = P_ub_density * Vol;
+
+  // =====================
+  // SHEAR FACES ANALYSIS
+  // =====================
+  const shearFaces = computeShearFaces(S, eSR, loadDir, L, W, H, hLow, hHigh, xLow, xHigh, yLow, yHigh, Vx, Vy, Vz, P_normal);
+
+  // =====================
+  // STORE RESULTS
+  // =====================
+  // compute probe velocity values for UI
+  const probeV = { Vx: Vx(probePoint[0],probePoint[1],probePoint[2]), Vy: Vy(probePoint[0],probePoint[1],probePoint[2]), Vz: Vz(probePoint[0],probePoint[1],probePoint[2]) };
+
+  lastResults = {
+    inputs:{L,W,H,sigN,V0,loadDir,bcType,stressTensor:S,stressTensorRaw:Sraw,bounds,probePoint,probeOk},
+    a:{tensor:S,raw:Sraw},
+    b:{I1:n(I1),I2:n(I2),I3:n(I3)},
+    c:{p1:n(p1),p2:n(p2),p3:n(p3),sigmaMean:n(sm2),devTensor:devTensor.map(r=>r.map(v=>n(v)))},
+    d:{center:n(Cc),radius:n(Rc),sig1:n(mohr_sig1),sig2:n(mohr_sig2),tauMax:n(Rc),angle:n(angle2th/2),plane:mohrPlane.label},
+    e:{kf_vm:n(kf_vm),kf_tr:n(kf_tr)},
+    f:{tensor:eSR.map(r=>r.map(v=>n(v,5))),principals:[n(pe1),n(pe2),n(pe3)]},
+    g:{Vx:vxStr,Vy:vyStr,Vz:vzStr,probe:probeV},
+    h:{velocities:velVals},
+    i:{P_normal:n(P_normal),P_shear:n(P_shear_top),P_ext:n(P_ext),breakdown:P_shear_breakdown,P_lat:n(P_lat)},
+    j:{P_int:n(P_int),density:n(P_int_density)},
+    k:{P_principal:n(P_principal)},
+    l:{sig_eq:n(sig_eq),eps_eq:n(eps_eq,5)},
+    m:{P_ub:n(P_ub),density:n(P_ub_density,5)},
+    shearFaces
+  };
+
+  // =====================
+  // RENDER
+  // =====================
+  renderResults(lastResults);
+  drawFBD(S, loadDir, bcType, L, W, H, bounds);
+  drawMohrCircle(Cc, Rc, sigA, sigB, tAB, mohrPlane.label);
+  renderShearFaces(shearFaces, loadDir);
+  renderFBDInfo(S, loadDir, bcType, L, W, H);
+
+  document.getElementById('resultsSection').style.display = 'grid';
+  document.getElementById('statusMsg').textContent = 'Analysis complete — ' + new Date().toLocaleTimeString();
+}
+
+function integrateShearPowerSingle(tau, velFn, u1,u2,v1,v2) {
+  // 2D Gaussian quadrature (3×3 points) for generic
+  const gpts = [-0.774596669, 0, 0.774596669];
+  const gwts = [0.555555556, 0.888888889, 0.555555556];
+  const umid=(u1+u2)/2, uhalf=(u2-u1)/2;
+  const vmid=(v1+v2)/2, vhalf=(v2-v1)/2;
+  let sum=0;
+  for (let i=0;i<3;i++) for (let j=0;j<3;j++) {
+    const u = umid+uhalf*gpts[i];
+    const v = vmid+vhalf*gpts[j];
+    sum += gwts[i]*gwts[j]*tau*velFn(u,v);
+  }
+  return sum*uhalf*vhalf;
+}
+
+function computeLateralPower(S, eSR, loadDir, L, W, H, hLow, hHigh, xL, xH, yL, yH, Vx, Vy, Vz) {
+  // Integrate shear over the vertical face perpendicular to load direction
+  let total = 0;
+  
+  if (loadDir === 'Z') {
+    // Lateral face perpendicular to Z: at y=W/2, integrate over x and z
+    const y = W/2;
+    const t = S[1][2]; // τ_yz
+    if (Math.abs(t)>1e-10) total += integrateShearPowerSingle(t, (x,z)=>Vy(x,y,z), xL,xH,hLow,hHigh);
+    const t2 = S[0][2]; // τ_xz
+    if (Math.abs(t2)>1e-10) total += integrateShearPowerSingle(t2, (x,z)=>Vx(x,y,z), xL,xH,hLow,hHigh);
+  }
+  else if (loadDir === 'Y') {
+    // Lateral face perpendicular to Y: at x=L/2, integrate over y and z
+    const x = L/2;
+    const t = S[0][2]; // τ_xz
+    if (Math.abs(t)>1e-10) total += integrateShearPowerSingle(t, (y,z)=>Vx(x,y,z), yL,yH,hLow,hHigh);
+    const t2 = S[1][2]; // τ_yz
+    if (Math.abs(t2)>1e-10) total += integrateShearPowerSingle(t2, (y,z)=>Vz(x,y,z), yL,yH,hLow,hHigh);
+  }
+  else if (loadDir === 'X') {
+    // Lateral face perpendicular to X: at y=W/2, integrate over z and y
+    const y = W/2;
+    const t = S[1][2]; // τ_yz
+    if (Math.abs(t)>1e-10) total += integrateShearPowerSingle(t, (z,y_)=>Vy(xH,y_,z), hLow,hHigh,yL,yH);
+    const t2 = S[0][1]; // τ_xy
+    if (Math.abs(t2)>1e-10) total += integrateShearPowerSingle(t2, (z,y_)=>Vx(xH,y_,z), hLow,hHigh,yL,yH);
+  }
+  return total;
+}
+
+function computeShearFaces(S, eSR, loadDir, L, W, H, hLow, hHigh, xL, xH, yL, yH, Vx, Vy, Vz, P_normal) {
+  const faces = [];
+  const z_top = hHigh, z_bot = hLow;
+  const y_top = yH, y_bot = yL;
+  const x_right = xH, x_left = xL;
+
+  const add = (name, faceNormal, stressComp, tauVal, velComp, velFn, u1,u2,v1,v2, note) => {
+    if (Math.abs(tauVal) < 1e-10) { faces.push({name,faceNormal,stressComp,tauVal:0,power:0,active:false,note}); return; }
+    const pwr = integrateShearPowerSingle(tauVal, velFn, u1,u2,v1,v2);
+    faces.push({name,faceNormal,stressComp,tauVal:n(tauVal),power:n(pwr),active:true,note});
+  };
+
+  // Z faces
+  add('Z+ (top)', '+Z', 'τ_zy', S[2][1], 'Vy', (x,y)=>Vy(x,y,z_top), xL,xH,yL,yH,
+    'Friction shear on loaded top face → drives Y-velocity');
+  add('Z+ (top)', '+Z', 'τ_zx', S[2][0], 'Vx', (x,y)=>Vx(x,y,z_top), xL,xH,yL,yH,
+    'Friction shear on loaded top face → drives X-velocity');
+  add('Z− (bottom)', '−Z', 'τ_zy', S[2][1], 'Vy', (x,y)=>Vy(x,y,z_bot), xL,xH,yL,yH,
+    'Bottom face: same shear but velocity may differ (fixed BC → V=0)');
+  add('Z− (bottom)', '−Z', 'τ_zx', S[2][0], 'Vx', (x,y)=>Vx(x,y,z_bot), xL,xH,yL,yH,
+    'Bottom face: shear × velocity at z=0 (fixed) or z=–H/2 (free)');
+
+  // Y faces
+  add('Y+ face', '+Y', 'τ_yz', S[1][2], 'Vz', (x,z)=>Vz(x,y_top,z), xL,xH,hLow,hHigh,
+    'Lateral Y+ face: conjugate to τ_zy — acts over height × length');
+  add('Y− face', '−Y', 'τ_yz', -S[1][2], 'Vz', (x,z)=>Vz(x,y_bot,z), xL,xH,hLow,hHigh,
+    'Lateral Y– face: equal magnitude, opposite sign by traction continuity');
+
+  // X faces
+  add('X+ face', '+X', 'τ_xz', S[0][2], 'Vz', (y,z)=>Vz(x_right,y,z), yL,yH,hLow,hHigh,
+    'Lateral X+ face: conjugate to τ_zx — acts over height × width');
+  add('X− face', '−X', 'τ_xz', -S[0][2], 'Vz', (y,z)=>Vz(x_left,y,z), yL,yH,hLow,hHigh,
+    'Lateral X– face: equal magnitude, opposite sign by traction continuity');
+
+  return faces;
+}
+
+// ========================
+// RENDER RESULTS
+// ========================
+function renderResults(R) {
+  const S = R.a.tensor;
+  const raw = R.a.raw || S;
+
+  // (a)
+  document.getElementById('res_a').innerHTML = `
+    <div class="result-title">Raw input tensor</div>
+    <div class="result-matrix">${matrixHtml(raw, 2)}</div>
+    <div class="explain-box" style="margin-top:0.5rem;">
+      Normal: <span class="math">σ<sub>${R.inputs.loadDir}${R.inputs.loadDir}</sub> = −${R.inputs.sigN}</span> (compressive).<br>
+      Classical power balance uses the symmetric tensor, so the calculation tensor is the average of each off-diagonal pair.<br>
+      Raw input is still shown above, which is useful when <span class="math">τ<sub>zy</sub></span> and <span class="math">τ<sub>yz</sub></span> differ.
+    </div>
+    <div class="result-title" style="margin-top:0.8rem;">Used for calculation (symmetric)</div>
+    <div class="result-matrix">${matrixHtml(S, 2)}</div>`;
+
+  // (b)
+  document.getElementById('res_b').innerHTML = `
+    <div class="result-block"><div class="result-title">I<sub>1</sub> = trace</div><div class="result-val">${R.b.I1}</div></div>
+    <div class="result-block"><div class="result-title">I<sub>2</sub></div><div class="result-val">${R.b.I2}</div></div>
+    <div class="result-block"><div class="result-title">I<sub>3</sub> = det</div><div class="result-val">${R.b.I3}</div></div>
+    <div class="explain-box">Invariants are independent of coordinate frame rotation — they characterize the stress state intrinsically.</div>`;
+
+  // (c)
+  const D = R.c.devTensor;
+  const sm = R.c.sigmaMean;
+  const hydro = [[sm,0,0],[0,sm,0],[0,0,sm]];
+  document.getElementById('res_c').innerHTML = `
+    <div class="result-block"><div class="result-title">Principal Stresses</div>
+      <div class="result-val">σ<sub>1</sub> = ${R.c.p1} &nbsp;|&nbsp; σ<sub>2</sub> = ${R.c.p2} &nbsp;|&nbsp; σ<sub>3</sub> = ${R.c.p3}</div></div>
+    <div class="result-block"><div class="result-title">Hydrostatic σ<sub>m</sub> = I<sub>1</sub>/3</div>
+      <div class="result-val">${R.c.sigmaMean}</div></div>
+    <div class="result-block"><div class="result-title">Hydrostatic Tensor [σ_H]</div>
+      <div class="result-matrix">${matrixHtml(hydro, 4)}</div></div>
+    <div class="result-block"><div class="result-title">Deviatoric Tensor [S] = [σ] - [σ_H]</div>
+      <div class="result-matrix">${matrixHtml(D, 3)}</div></div>`;
+
+  // (d) — Mohr drawn separately
+  document.getElementById('res_d').innerHTML = `
+    <div class="result-val">Plane ${R.d.plane} &nbsp;|&nbsp; Centre C = ${R.d.center} &nbsp;|&nbsp; R = ${R.d.radius}</div>
+    <div class="result-val" style="margin-top:0.4rem;">σ<sub>1</sub> = ${R.d.sig1} &nbsp;|&nbsp; σ<sub>2</sub> = ${R.d.sig2}</div>
+    <div class="result-val" style="margin-top:0.4rem;">τ<sub>max</sub> = ${R.d.tauMax} &nbsp;|&nbsp; θ = ${R.d.angle}°</div>`;
+
+  // (e)
+  document.getElementById('res_e').innerHTML = `
+    <div class="result-block"><div class="result-title">Von Mises k<sub>f</sub></div>
+      <div class="result-val highlight">k<sub>f</sub> (VM) = ${R.e.kf_vm}</div></div>
+    <div class="result-block"><div class="result-title">Tresca k<sub>f</sub></div>
+      <div class="result-val">k<sub>f</sub> (Tr) = ${R.e.kf_tr}</div></div>
+    <div class="explain-box">Von Mises ≈ 87% of Tresca for pure shear. VM is more accurate experimentally.</div>`;
+
+  // (f)
+  const E = R.f.tensor;
+  document.getElementById('res_f').innerHTML = `
+    <div class="result-matrix">${matrixHtml(E, 4)}</div>
+    <div class="result-block" style="margin-top:0.5rem;"><div class="result-title">Principal Strain Rates</div>
+      <div class="result-val">ε̇<sub>1</sub>=${R.f.principals[0]} ε̇<sub>2</sub>=${R.f.principals[1]} ε̇<sub>3</sub>=${R.f.principals[2]}</div></div>
+    <div class="info-pill">∑ε̇ = ${n(R.f.principals.reduce((a,b)=>a+b,0),5)} ≈ 0 (incompressibility)</div>`;
+
+  // (g)
+  document.getElementById('res_g').innerHTML = `
+    <div class="result-val">Vx = ${R.g.Vx}</div>
+    <div class="result-val" style="margin-top:0.4rem;">Vy = ${R.g.Vy}</div>
+    <div class="result-val" style="margin-top:0.4rem;">Vz = ${R.g.Vz}</div>
+    <div class="explain-box" style="margin-top:0.5rem;">Linear velocity field consistent with uniform strain rate. Shear terms use ∂V<sub>trans</sub>/∂x<sub>load</sub> = 2ε̇<sub>trans,load</sub>.</div>`;
+
+  // (h)
+  const hRows = R.h.velocities.map(v=>
+    `<tr><td>${v.coord}</td><td>${v.Vx}</td><td>${v.Vy}</td><td>${v.Vz}</td></tr>`
+  ).join('');
+  document.getElementById('res_h').innerHTML = `
+    <table class="shear-table">
+      <thead><tr><th>Point</th><th>Vx</th><th>Vy</th><th>Vz</th></tr></thead>
+      <tbody>${hRows}</tbody>
+    </table>`;
+
+  // (i) External Power
+  const bkd = R.i.breakdown.map(b=>`<div class="check-row">${b.face} · ${b.component} = <strong>${b.val}</strong></div>`).join('');
+  document.getElementById('res_i').innerHTML = `
+    <div class="power-summary">
+      <div class="power-box"><div class="val">${R.i.P_normal}</div><div class="lbl">P_compression</div></div>
+      <div class="power-box"><div class="val">${R.i.P_shear}</div><div class="lbl">P_shear (top)</div></div>
+      <div class="power-box" style="background:#FDF0DC;"><div class="val">${R.i.P_ext}</div><div class="lbl">P_external total</div></div>
+    </div>
+    ${bkd}
+    <div style="margin-top:0.6rem;"><div class="result-title">Lateral face shear power</div>
+      <div class="result-val">${R.i.P_lat} units</div></div>`;
+
+  // (j) Internal Power
+  document.getElementById('res_j').innerHTML = `
+    <div style="margin-top:0.6rem;"><div class="result-title">(j) Internal power</div>
+      <div class="result-val good">P_int = ${R.j.P_int} &nbsp;(density=${R.j.density}/vol)</div></div>
+    <div class="explain-box">Internal power = deviatoric stress : strain_rate</div>`;
+
+  // (k) Principal Power
+  document.getElementById('res_k').innerHTML = `
+    <div style="margin-top:0.4rem;"><div class="result-title">(k) P via principal × principal strain rate</div>
+      <div class="result-val">${R.k.P_principal}</div></div>
+    <div class="check-row" style="margin-top:0.5rem;font-size:0.78rem;">
+      <span>✓ P_ext ≈ P_int? </span>
+      <span class="badge ${Math.abs(R.i.P_ext-R.j.P_int)<1 ? 'badge-ok':'badge-warn'}">
+        Δ = ${n(Math.abs(R.i.P_ext-R.j.P_int),2)}
+      </span>
+    </div>`;
+
+  // (l)
+  document.getElementById('res_l').innerHTML = `
+    <div class="highlight-box">
+      <div class="big-num">${R.l.sig_eq}</div>
+      <div class="unit">σ̄ — Equivalent stress (units)</div>
+    </div>
+    <div class="highlight-box" style="margin-top:0.6rem;">
+      <div class="big-num">${R.l.eps_eq}</div>
+      <div class="unit">ε̄̇ — Effective strain rate (s<sup>−1</sup>)</div>
+    </div>
+    <div class="check-row" style="margin-top:0.5rem;font-size:0.78rem;">
+      σ̄·ε̄̇ = ${n(R.l.sig_eq*R.l.eps_eq,4)} &nbsp;≈ density ${R.j.density}
+    </div>`;
+
+  // (m)
+  document.getElementById('res_m').innerHTML = `
+    <div class="result-block"><div class="result-title">P<sub>UB</sub> per unit volume</div>
+      <div class="result-val highlight">${R.m.density} units/vol</div></div>
+    <div class="result-block"><div class="result-title">P<sub>UB</sub> total = σ̄·ε̄̇·Vol</div>
+      <div class="result-val highlight">${R.m.P_ub} units</div></div>
+    <div class="explain-box">Upper bound = σ̄ × ε̄̇ × Volume. The assumed linear velocity field is kinematically admissible ∴ it provides a valid upper bound.</div>`;
+}
+
+// ========================
+// SHEAR FACES TABLE
+// ========================
+function renderShearFaces(faces, loadDir) {
+  const axisNames = ['X','Y','Z'];
+  const ldIdx = {X:0,Y:1,Z:2}[loadDir];
+  const transAxes = axisNames.filter((_,i)=>i!==ldIdx);
+  const prettyComp = text => text.replace(/([A-Za-zτσ̇]+)_([A-Za-z0-9]+)/g, '$1<sub>$2</sub>');
+
+  let html = `
+    <table class="shear-table">
+      <thead><tr><th>Face</th><th>Component</th><th>τ value</th><th>Power (∫)</th><th>Status</th></tr></thead>
+      <tbody>`;
+
+  faces.forEach(f => {
+    html += `<tr>
+      <td><span class="face-tag ${f.active?'face-active':'face-note'}">${f.name}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;">${prettyComp(f.stressComp)}</td>
+      <td>${f.tauVal}</td>
+      <td><strong>${f.power}</strong></td>
+      <td><span class="badge ${f.active?'badge-warn':'badge-ok'}">${f.active?'Active':'Zero'}</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table>
+
+  <div class="explain-box" style="margin-top:1rem;margin-bottom:0.8rem;">
+    <strong>Why do zy and yz give different power values?</strong><br><br>
+    Consider <span class="math">τ<sub>zy</sub></span> and <span class="math">τ<sub>yz</sub></span> as the two oriented face components. In a symmetric classical stress tensor they match, but the UI shows both so new users can see the face orientation explicitly.<br><br>
+    • <strong>zy (top face, z=H)</strong>: Power = ∫∫ <span class="math">τ<sub>zy</sub></span> · <span class="math">V<sub>y</sub></span> dx dy at z=H.<br>
+    &nbsp;&nbsp;<span class="math">V<sub>y</sub></span> at z=H includes the shear-driven term aligned with the loaded face, which is large.<br>
+    &nbsp;&nbsp;This gives: <strong>~6000 units</strong> (example).<br><br>
+    • <strong>yz (lateral Y face)</strong>: Power = ∫∫ <span class="math">τ<sub>yz</sub></span> · <span class="math">V<sub>y</sub></span> dx dz over height.<br>
+    &nbsp;&nbsp;Here the lateral face sees the same component family but on a different oriented face, so the integration limits and velocity slice change.<br>
+    &nbsp;&nbsp;The z-integral accumulates the velocity gradient, giving: <strong>~8500 units</strong>.<br><br>
+    <strong>Which to use for external power?</strong><br>
+    The <span class="math">top face (zy)</span> represents the actual friction power input from the ram/platen.
+    The lateral face (yz) represents internal traction work done against the material's own shear flow.
+    <br><br>
+    For <em>external power balance</em>: use the <strong>loaded face (zy)</strong> only.<br>
+    For <em>internal power</em>: use σ·ε̇ double contraction over the full volume.
+  </div>
+  
+  <div class="explain-box">
+    <strong>Power consideration guide:</strong><br>
+    • External = σ·A·V on loaded faces only<br>
+    • Shear on lateral faces arises from conjugate stresses, but these are <em>internal</em> tractions<br>
+    • P_internal = ∫∫∫ σᵢⱼ·ε̇ᵢⱼ dV (volume integral — counts all faces implicitly)<br>
+    • Consistency check: P_ext (top) ≈ P_int when velocity field is exactly compatible
+  </div>`;
+
+  document.getElementById('shearFacesContent').innerHTML = html;
+}
+
+function renderFBDInfo(S, loadDir, bcType, L, W, H) {
+  const pairs = [
+    {name:'xy/yx', value:(S[0][1] + S[1][0]) / 2, color:'#6B46C1'},
+    {name:'xz/zx', value:(S[0][2] + S[2][0]) / 2, color:'#2B6CB0'},
+    {name:'yz/zy', value:(S[1][2] + S[2][1]) / 2, color:'#0F766E'},
+  ];
+  const active = pairs.filter(p => Math.abs(p.value) > 1e-9);
+  const activeText = active.length
+    ? active.map(p => `<span><span class="legend-dot" style="background:${p.color}"></span>τ<sub>${p.name}</sub> = ${fmt(p.value,2)}</span>`).join('')
+    : '<span>No shear components active</span>';
+
+  document.getElementById('fbdInfo').innerHTML = `
+    <div class="fbd-info-grid">
+      <div class="fbd-info-box"><div class="label">Block</div><div class="value">${L} × ${W} × ${H}</div></div>
+      <div class="fbd-info-box"><div class="label">Load</div><div class="value">σ<sub>${loadDir.toLowerCase()}${loadDir.toLowerCase()}</sub>, ${bcType === 'free' ? 'two faces' : 'top face'}</div></div>
+      <div class="fbd-info-box"><div class="label">Rotate</div><div class="value">drag canvas</div></div>
+    </div>
+    <div class="legend-list">
+      <span><span class="legend-dot" style="background:#B84C1E"></span>normal stress</span>
+      ${activeText}
+    </div>
+    <div class="explain-box" style="margin-top:0.7rem;font-size:0.78rem;">
+      Shear is drawn on conjugate face pairs: τ<sub>xy</sub>/τ<sub>yx</sub>, τ<sub>xz</sub>/τ<sub>zx</sub>, and τ<sub>yz</sub>/τ<sub>zy</sub>. Opposite faces get opposite arrow direction from traction symmetry.
+    </div>`;
+}
+
+// ========================
+// CANVAS: FREE BODY DIAGRAM
+// ========================
+function drawFBD(S, loadDir, bcType, L, W, H, bounds) {
+  const cv = document.getElementById('fbd3d');
+  const ctx = cv.getContext('2d');
+  cv.width = cv.parentElement.clientWidth || 600;
+  const cw = cv.width, ch = 620;
+  cv.height = ch;
+  ctx.clearRect(0,0,cw,ch);
+
+  const maxDim = Math.max(L, W, H, 1);
+  const x0 = -L / (2 * maxDim), x1 = L / (2 * maxDim);
+  const y0 = -W / (2 * maxDim), y1 = W / (2 * maxDim);
+  const z0 = bcType === 'fixed' ? 0 : -H / (2 * maxDim);
+  const z1 = bcType === 'fixed' ? H / maxDim : H / (2 * maxDim);
+  const rawProject = (x, y, z) => ({
+    px: x + y * fbdDepth * Math.cos(fbdYaw),
+    py: -z + y * fbdDepth * Math.sin(fbdYaw)
+  });
+  const rawCorners = [
+    rawProject(x0,y0,z0), rawProject(x1,y0,z0), rawProject(x1,y1,z0), rawProject(x0,y1,z0),
+    rawProject(x0,y0,z1), rawProject(x1,y0,z1), rawProject(x1,y1,z1), rawProject(x0,y1,z1)
+  ];
+  const minX = Math.min(...rawCorners.map(p => p.px));
+  const maxX = Math.max(...rawCorners.map(p => p.px));
+  const minY = Math.min(...rawCorners.map(p => p.py));
+  const maxY = Math.max(...rawCorners.map(p => p.py));
+  const usableW = Math.max(180, cw - 135);
+  const usableH = ch - 80;
+  const scale = Math.min(usableW / Math.max(maxX-minX, 0.1), usableH / Math.max(maxY-minY, 0.1));
+  const cx = 42 + (usableW - (maxX-minX)*scale) / 2 - minX * scale;
+  const cy = 38 + (usableH - (maxY-minY)*scale) / 2 - minY * scale;
+  const project = (x, y, z) => {
+    const p = rawProject(x, y, z);
+    return { px: cx + p.px * scale, py: cy + p.py * scale };
+  };
+
+  const corners = {
+    A: project(x0, y0, z0), B: project(x1, y0, z0), C: project(x1, y1, z0), D: project(x0, y1, z0),
+    E: project(x0, y0, z1), F: project(x1, y0, z1), G: project(x1, y1, z1), H_c: project(x0, y1, z1)
+  };
+
+  // Draw box faces with proper z-ordering (back to front)
+  const drawFace = (c1, c2, c3, c4, color, alpha) => {
+    ctx.beginPath();
+    ctx.moveTo(c1.px, c1.py);
+    ctx.lineTo(c2.px, c2.py);
+    ctx.lineTo(c3.px, c3.py);
+    ctx.lineTo(c4.px, c4.py);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  };
+
+  // Left face (yz plane)
+  drawFace(corners.A, corners.E, corners.H_c, corners.D, '#D4701A', 0.2);
+  // Right face (yz plane)
+  drawFace(corners.B, corners.C, corners.G, corners.F, '#E8903A', 0.15);
+  // Top face (xy plane)
+  drawFace(corners.E, corners.F, corners.G, corners.H_c, '#F5B563', 0.25);
+  // Front face (xz plane)
+  drawFace(corners.A, corners.B, corners.F, corners.E, '#D4701A', 0.18);
+
+  // Draw edges
+  ctx.strokeStyle = '#6B3410';
+  ctx.lineWidth = 1.8;
+  const edges = [
+    [corners.A, corners.B], [corners.B, corners.C], [corners.C, corners.D], [corners.D, corners.A],
+    [corners.E, corners.F], [corners.F, corners.G], [corners.G, corners.H_c], [corners.H_c, corners.E],
+    [corners.A, corners.E], [corners.B, corners.F], [corners.C, corners.G], [corners.D, corners.H_c]
+  ];
+  edges.forEach(([p1, p2]) => {
+    ctx.beginPath(); ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py); ctx.stroke();
+  });
+
+  const normBounds = {X:[x0,x1], Y:[y0,y1], Z:[z0,z1]};
+  const coordWith = (axis, value, base = {X:0,Y:0,Z:(z0+z1)/2}) => {
+    const p = {...base};
+    p[axis] = value;
+    return p;
+  };
+  const axisDelta = (axis, amount) => {
+    const d = {X:0,Y:0,Z:0};
+    d[axis] = amount;
+    return d;
+  };
+  const addPoint = (a, b) => ({X:a.X+b.X, Y:a.Y+b.Y, Z:a.Z+b.Z});
+  const drawLabel = (text, x, y, color) => {
+    ctx.save();
+    ctx.font = 'bold 11px JetBrains Mono';
+    const w = ctx.measureText(text).width + 10;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillRect(x - w/2, y - 18, w, 17);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - w/2, y - 18, w, 17);
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, x, y - 5);
+    ctx.restore();
+  };
+  const drawStressArrow3 = (origin, dirAxis, signedMag, color, label) => {
+    const len = 0.18;
+    const sign = signedMag >= 0 ? 1 : -1;
+    const dir = axisDelta(dirAxis, len * sign);
+    const p0 = project(origin.X - dir.X/2, origin.Y - dir.Y/2, origin.Z - dir.Z/2);
+    const p1 = project(origin.X + dir.X/2, origin.Y + dir.Y/2, origin.Z + dir.Z/2);
+    drawArrowFilled(ctx, p0.px, p0.py, p1.px, p1.py, color, 2.4);
+    drawLabel(label, p1.px, p1.py, color);
+  };
+  const drawShearPair = (faceAxis, dirAxis, tau, color, label) => {
+    if (Math.abs(tau) < 1e-9) return;
+    [-1, 1].forEach(faceSign => {
+      const faceCoord = faceSign < 0 ? normBounds[faceAxis][0] : normBounds[faceAxis][1];
+      const origin = coordWith(faceAxis, faceCoord);
+      const nudge = axisDelta(dirAxis, 0.04 * faceSign);
+      drawStressArrow3(addPoint(origin, nudge), dirAxis, tau * faceSign, color, label);
+    });
+  };
+  const normalLabel = `σ${loadDir.toLowerCase()}${loadDir.toLowerCase()}`;
+  const normalFaces = bcType === 'free' ? [-1, 1] : [1];
+  normalFaces.forEach(faceSign => {
+    const faceCoord = faceSign < 0 ? normBounds[loadDir][0] : normBounds[loadDir][1];
+    drawStressArrow3(coordWith(loadDir, faceCoord), loadDir, -faceSign, '#B84C1E', normalLabel);
+  });
+  drawShearPair('X', 'Y', S[0][1], '#6B46C1', 'τxy');
+  drawShearPair('Y', 'X', S[1][0], '#6B46C1', 'τyx');
+  drawShearPair('X', 'Z', S[0][2], '#2B6CB0', 'τxz');
+  drawShearPair('Z', 'X', S[2][0], '#2B6CB0', 'τzx');
+  drawShearPair('Y', 'Z', S[1][2], '#0F766E', 'τyz');
+  drawShearPair('Z', 'Y', S[2][1], '#0F766E', 'τzy');
+
+  const drawAxisTriad = () => {
+    const bx = cw - 92, by = 74;
+    drawArrowFilled(ctx, bx, by, bx + 46, by, '#B84C1E', 2);
+    drawArrowFilled(ctx, bx, by, bx - 28, by + 26, '#0F766E', 2);
+    drawArrowFilled(ctx, bx, by, bx, by - 42, '#2B6CB0', 2);
+    ctx.font = 'bold 11px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#B84C1E'; ctx.fillText('X', bx + 55, by + 4);
+    ctx.fillStyle = '#0F766E'; ctx.fillText('Y', bx - 36, by + 34);
+    ctx.fillStyle = '#2B6CB0'; ctx.fillText('Z', bx, by - 50);
+  };
+  drawAxisTriad();
+
+  // Dimension labels
+  ctx.fillStyle = '#2C2C2C'; ctx.font = 'bold 11px Lato'; ctx.textAlign = 'center';
+  
+  // Label L on bottom front edge
+  const midAB = {px: (corners.A.px + corners.B.px)/2, py: (corners.A.py + corners.B.py)/2};
+  ctx.fillText('L = '+Math.round(L), midAB.px, midAB.py + 20);
+  
+  // Label W on front-left edge
+  const midAD = {px: (corners.A.px + corners.D.px)/2 - 25, py: (corners.A.py + corners.D.py)/2};
+  ctx.fillText('W = '+Math.round(W), midAD.px, midAD.py);
+  
+  // Label H on left edge
+  const midAE = {px: (corners.A.px + corners.E.px)/2 - 25, py: (corners.A.py + corners.E.py)/2};
+  ctx.fillText('H = '+Math.round(H), midAE.px, midAE.py);
+
+  // Fixed base support indicator and hatching
+  const baseCorners = [corners.A, corners.B, corners.C, corners.D];
+  if (bcType === 'fixed') {
+    // Solid shaded base for fixed support
+    ctx.fillStyle = '#8B4513';
+    ctx.globalAlpha = 0.42;
+    ctx.beginPath();
+    ctx.moveTo(baseCorners[0].px, baseCorners[0].py);
+    baseCorners.slice(1).forEach(p => ctx.lineTo(p.px, p.py));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Boundary condition label
+  ctx.fillStyle = '#C4661A'; ctx.font = 'bold 12px JetBrains Mono'; ctx.textAlign = 'center';
+  ctx.fillText(bcType === 'fixed' ? '⊘ FIXED BASE' : 'FREE BOTH ENDS', cw/2, ch - 15);
+}
+
+function drawFBDThree(canvas, S, loadDir, bcType, L, W, H) {
+  const THREE = window.THREE;
+  const cw = canvas.parentElement.clientWidth || 600;
+  const ch = 340;
+  canvas.width = cw;
+  canvas.height = ch;
+
+  if (!canvas._threeRenderer) {
+    canvas._threeRenderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
+  }
+  const renderer = canvas._threeRenderer;
+  renderer.setSize(cw, ch, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0xffffff, 1);
+
+  const scene = new THREE.Scene();
+  const maxDim = Math.max(L, W, H, 1);
+  const span = maxDim * 1.55;
+  const aspect = cw / ch;
+  const camera = new THREE.OrthographicCamera(
+    -span * aspect / 2, span * aspect / 2,
+    span / 2, -span / 2,
+    0.1, maxDim * 8
+  );
+  camera.position.set(maxDim * 1.35, maxDim * 0.95, maxDim * 1.35);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8b27c, 1.8));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+  dirLight.position.set(maxDim, maxDim * 2, maxDim);
+  scene.add(dirLight);
+
+  const centerY = bcType === 'fixed' ? H / 2 : 0;
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(L, H, W),
+    new THREE.MeshStandardMaterial({
+      color: 0xe8903a,
+      roughness: 0.58,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.82
+    })
+  );
+  box.position.y = centerY;
+  scene.add(box);
+
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(box.geometry),
+    new THREE.LineBasicMaterial({color: 0x6b3410})
+  );
+  edges.position.copy(box.position);
+  scene.add(edges);
+
+  const supportMat = new THREE.MeshBasicMaterial({color: 0x6b3410, transparent: true, opacity: 0.22});
+  if (bcType === 'fixed') {
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(L * 1.12, maxDim * 0.025, W * 1.12), supportMat);
+    plate.position.y = -maxDim * 0.025;
+    scene.add(plate);
+  }
+
+  const axisToVec = {
+    X: new THREE.Vector3(1, 0, 0),
+    Y: new THREE.Vector3(0, 0, 1),
+    Z: new THREE.Vector3(0, 1, 0)
+  };
+  const axisSize = {X: L, Y: W, Z: H};
+  const loadVec = axisToVec[loadDir].clone().normalize();
+  const topCenter = loadVec.clone().multiplyScalar(axisSize[loadDir] / 2 + maxDim * 0.22);
+  if (loadDir === 'Z' && bcType === 'fixed') topCenter.y = H + maxDim * 0.22;
+  const stressArrow = new THREE.ArrowHelper(loadVec.clone().negate(), topCenter, maxDim * 0.32, 0xb84c1e, maxDim * 0.09, maxDim * 0.045);
+  scene.add(stressArrow);
+
+  const shearPairs = [
+    {tau: S[2][1], load: 'Z', dir: 'Y', color: 0x4f9a64},
+    {tau: S[2][0], load: 'Z', dir: 'X', color: 0x4a6fa5},
+    {tau: S[1][2], load: 'Y', dir: 'Z', color: 0x4f9a64},
+    {tau: S[0][2], load: 'X', dir: 'Z', color: 0x4a6fa5},
+    {tau: S[0][1], load: 'X', dir: 'Y', color: 0x4f9a64}
+  ];
+  shearPairs
+    .filter(p => p.load === loadDir && Math.abs(p.tau) > 1e-9)
+    .forEach((p, index) => {
+      const dir = axisToVec[p.dir].clone().multiplyScalar(Math.sign(p.tau) || 1).normalize();
+      const offset = loadVec.clone().multiplyScalar(axisSize[loadDir] / 2 + maxDim * 0.04);
+      const sideShift = new THREE.Vector3(0, 0, 0);
+      if (index) sideShift.add(new THREE.Vector3(maxDim * 0.12, 0, 0));
+      const origin = offset.add(sideShift).add(dir.clone().multiplyScalar(-maxDim * 0.18));
+      scene.add(new THREE.ArrowHelper(dir, origin, maxDim * 0.36, p.color, maxDim * 0.07, maxDim * 0.035));
+    });
+
+  renderer.render(scene, camera);
+}
+
+function drawArrow(ctx, x1,y1,x2,y2,color,lw=2) {
+  const ang = Math.atan2(y2-y1,x2-x1);
+  const len = Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const hs=8;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hs*Math.cos(ang-0.35),y2-hs*Math.sin(ang-0.35));
+  ctx.lineTo(x2-hs*Math.cos(ang+0.35),y2-hs*Math.sin(ang+0.35));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// Filled arrow for stress (σ) - unique style
+function drawArrowFilled(ctx, x1,y1,x2,y2,color,lw=2) {
+  const ang = Math.atan2(y2-y1,x2-x1);
+  const len = Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const hs=10;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hs*Math.cos(ang-0.4),y2-hs*Math.sin(ang-0.4));
+  ctx.lineTo(x2-hs*Math.cos(ang+0.4),y2-hs*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// Outline arrow for velocity (V) - unique style
+function drawArrowOutline(ctx, x1,y1,x2,y2,color,lw=2) {
+  const ang = Math.atan2(y2-y1,x2-x1);
+  const len = Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle='white'; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const hs=10;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hs*Math.cos(ang-0.4),y2-hs*Math.sin(ang-0.4));
+  ctx.lineTo(x2-hs*Math.cos(ang+0.4),y2-hs*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
+// ========================
+// CANVAS: VELOCITY FIELD
+// ========================
+function drawVelocityField(eSR, loadDir, bcType, L, W, H, Vx, Vy, Vz, bounds) {
+  const cv = document.getElementById('velCanvas');
+  const ctx = cv.getContext('2d');
+  cv.width = cv.parentElement.clientWidth || 500;
+  const cw = cv.width, ch = 220;
+  cv.height = ch;
+  ctx.clearRect(0,0,cw,ch);
+
+  const axisOrder = {
+    Z: ['X', 'Z', 'Y'],
+    Y: ['X', 'Y', 'Z'],
+    X: ['Y', 'X', 'Z'],
+  }[loadDir];
+  const horizAxis = axisOrder[0];
+  const vertAxis = axisOrder[1];
+  const fixedAxis = axisOrder[2];
+  const b = bounds || getBounds(L, W, H, loadDir, bcType);
+
+  const padL=50, padR=20, padT=20, padB=30;
+  const plotW = cw-padL-padR, plotH = ch-padT-padB;
+
+  const hLow = b[vertAxis][0];
+  const hHigh = b[vertAxis][1];
+  const uLow = b[horizAxis][0];
+  const uHigh = b[horizAxis][1];
+  const fixedMid = (b[fixedAxis][0] + b[fixedAxis][1]) / 2;
+
+  const toSu = u => padL + ((u-uLow)/(uHigh-uLow))*plotW;
+  const toSv = v => padT + plotH - ((v-hLow)/(hHigh-hLow))*plotH;
+
+  const coordValue = (axis, u, v) => {
+    const point = {X: 0, Y: 0, Z: 0};
+    point[horizAxis] = u;
+    point[vertAxis] = v;
+    point[fixedAxis] = fixedMid;
+    return point[axis];
+  };
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(padL,0,padL+plotW,0);
+  grad.addColorStop(0,'#FFF8EE'); grad.addColorStop(1,'#FDF0DC');
+  ctx.fillStyle=grad;
+  ctx.fillRect(padL,padT,plotW,plotH);
+  ctx.strokeStyle='#E0C99A'; ctx.lineWidth=1;
+  ctx.strokeRect(padL,padT,plotW,plotH);
+
+  // Velocity vectors on grid
+  const nx=6, nz=8;
+  for (let i=0;i<=nx;i++) for (let j=0;j<=nz;j++) {
+    const u = uLow + i*(uHigh-uLow)/nx;
+    const v = hLow + j*(hHigh-hLow)/nz;
+    const x = coordValue('X', u, v);
+    const y = coordValue('Y', u, v);
+    const z = coordValue('Z', u, v);
+    const vx = Vx(x,y,z);
+    const vy = Vy(x,y,z);
+    const vz = Vz(x,y,z);
+    const su=toSu(u), sv=toSv(v);
+    const scale=6;
+    const axisVel = {
+      X: vx,
+      Y: vy,
+      Z: vz,
+    };
+    const ex=su+axisVel[horizAxis]*scale, ez=sv-axisVel[vertAxis]*scale;
+    const mag=Math.sqrt(vx**2+vy**2+vz**2);
+    const hue = Math.min(1,mag/2);
+    const r=Math.round(180+75*hue), g=Math.round(100-50*hue), b=60;
+    drawArrow(ctx,su,sv,ex,ez,`rgb(${r},${g},${b})`,1.2);
+  }
+
+  // Ram — show as rectangle at top
+  const ramY = padT - 12;
+  ctx.fillStyle='#5C300F';
+  ctx.fillRect(padL, ramY, plotW, 10);
+  ctx.fillStyle='white'; ctx.font='bold 9px JetBrains Mono'; ctx.textAlign='center';
+  ctx.fillText('RAM  →  V = '+document.getElementById('ramVel').value, padL+plotW/2, ramY+7.5);
+
+  // Downward arrow from ram
+  drawArrow(ctx, padL+plotW/2, ramY+10, padL+plotW/2, padT+8, '#B84C1E', 1.5);
+
+  // Fixed support or arrows at bottom
+  if (bcType==='fixed') {
+    ctx.fillStyle='#8B4513'; ctx.globalAlpha=0.3;
+    ctx.fillRect(padL, padT+plotH, plotW, 8);
+    ctx.globalAlpha=1;
+    for(let i=0;i<8;i++) {
+      ctx.strokeStyle='#8B4513'; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(padL+i*plotW/7, padT+plotH+8);
+      ctx.lineTo(padL+i*plotW/7-5, padT+plotH+14);
+      ctx.stroke();
+    }
+  } else {
+    drawArrow(ctx, padL+plotW/2, padT+plotH+20, padL+plotW/2, padT+plotH+2, '#B84C1E', 1.5);
+    ctx.fillStyle='#B84C1E'; ctx.font='9px JetBrains Mono'; ctx.textAlign='center';
+    ctx.fillText('V', padL+plotW/2, padT+plotH+30);
+  }
+
+  // Axes
+  ctx.fillStyle='#888'; ctx.font='10px JetBrains Mono'; ctx.textAlign='center';
+  ctx.fillText(`${horizAxis} (${uLow} to ${uHigh})`, padL+plotW/2, ch-4);
+  ctx.save(); ctx.translate(14, padT+plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(`${vertAxis} (height)`, 0, 0); ctx.restore();
+
+  // Title
+  ctx.fillStyle='#C4661A'; ctx.font='bold 10px Lato'; ctx.textAlign='left';
+  ctx.fillText(`Velocity Field — ${horizAxis}–${vertAxis} Cross Section (${fixedAxis}=${fmt(fixedMid,2)})`, padL, padT-3);
+}
+
+// ========================
+// CANVAS: MOHR'S CIRCLE
+// ========================
+function drawMohrCircle(C, R, sigA, sigB, tau, planeLabel) {
+  const cv = document.getElementById('mohrCanvas');
+  const ctx = cv.getContext('2d');
+  cv.width = cv.parentElement.clientWidth || 520;
+  const cw = cv.width, ch = 390;
+  cv.height = ch;
+  ctx.clearRect(0,0,cw,ch);
+
+  const safeR = Math.max(R, 1e-6);
+  const pad = 54;
+  const panelW = Math.min(cw - 2 * pad, ch - 2 * pad) * 1.12;
+  const scale = panelW / (2.55 * safeR);
+  const ox = cw * 0.43 - C * scale;
+  const oy = ch / 2 + 10;
+
+  const toX = s => ox + s*scale;
+  const toY = t => oy - t*scale;
+  const left = Math.max(24, toX(C - safeR * 1.35));
+  const right = Math.min(cw - 24, toX(C + safeR * 1.35));
+  const top = toY(safeR * 1.35);
+  const bottom = toY(-safeR * 1.35);
+
+  const bg = ctx.createLinearGradient(0, top, 0, bottom);
+  bg.addColorStop(0, '#FFF8EE');
+  bg.addColorStop(1, '#FFFFFF');
+  ctx.fillStyle = bg;
+  ctx.fillRect(left, top, right-left, bottom-top);
+
+
+
+  ctx.strokeStyle='#D39A49'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(left,oy); ctx.lineTo(right,oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(toX(0),top); ctx.lineTo(toX(0),bottom); ctx.stroke();
+  ctx.fillStyle='#666'; ctx.font='bold 12px JetBrains Mono';
+  ctx.fillText('σ', right+4, oy+4); ctx.fillText('τ', toX(0)+8, top-8);
+
+  ctx.beginPath();
+  ctx.arc(toX(C), toY(0), R*scale, 0, 2*Math.PI);
+  ctx.fillStyle='rgba(232,144,58,0.18)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(toX(C), toY(0), R*scale, 0, 2*Math.PI);
+  ctx.strokeStyle='#E8903A';
+  ctx.lineWidth=4.5;
+  ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(toX(C), toY(0)); ctx.lineTo(toX(C+R), toY(0));
+  ctx.strokeStyle='#C4661A'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#C4661A'; ctx.font='bold 12px JetBrains Mono';
+  ctx.fillText('R', (toX(C)+toX(C+R))/2, oy-8);
+
+  ctx.beginPath(); ctx.arc(toX(sigA),toY(tau),7,0,2*Math.PI);
+  ctx.fillStyle='#B84C1E'; ctx.fill();
+  ctx.beginPath(); ctx.arc(toX(sigB),toY(-tau),7,0,2*Math.PI);
+  ctx.fillStyle='#4A6FA5'; ctx.fill();
+
+  ctx.beginPath(); ctx.moveTo(toX(sigA),toY(tau)); ctx.lineTo(toX(sigB),toY(-tau));
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.8; ctx.setLineDash([6,5]); ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.beginPath(); ctx.arc(toX(C),toY(0),4,0,2*Math.PI);
+  ctx.fillStyle='#555'; ctx.fill();
+
+  const ps1=C+R, ps2=C-R;
+  ctx.beginPath(); ctx.arc(toX(ps1),toY(0),6,0,2*Math.PI);
+  ctx.fillStyle='#7A9E7E'; ctx.fill();
+  ctx.beginPath(); ctx.arc(toX(ps2),toY(0),6,0,2*Math.PI);
+  ctx.fillStyle='#7A9E7E'; ctx.fill();
+
+  ctx.fillStyle='#B84C1E'; ctx.font='bold 11px JetBrains Mono';
+  ctx.fillText(`A(${fmt(sigA,2)}, ${fmt(tau,2)})`, toX(sigA)+8, toY(tau)-8);
+  ctx.fillStyle='#4A6FA5';
+  ctx.fillText(`B(${fmt(sigB,2)}, ${fmt(-tau,2)})`, toX(sigB)+8, toY(-tau)+18);
+  ctx.fillStyle='#7A9E7E';
+  ctx.fillText('σ₁='+n(ps1,2), toX(ps1)+8, toY(0)-10);
+  ctx.fillText('σ₂='+n(ps2,2), toX(ps2)-46, toY(0)-10);
+  ctx.fillStyle='#E8903A';
+  ctx.fillText('C='+n(C,2), toX(C)+7, toY(0)+18);
+
+  ctx.fillStyle='#C4661A';
+  ctx.font='bold 14px Lato';
+  ctx.fillText(`Mohr's Circle (${planeLabel || 'active'} plane)`, left, top-16);
+}
+
+// ========================
+// EXPORT
+// ========================
+function exportResult(fmt) {
+  if (!lastResults) { alert('Run analysis first.'); return; }
+  const R = lastResults;
+  let content='', filename='', mime='';
+
+  if (fmt==='json') {
+    content = JSON.stringify(R, null, 2);
+    filename = 'upsetting_analysis.json'; mime='application/json';
+  } else if (fmt==='yaml') {
+    content = toYAML(R, 0);
+    filename='upsetting_analysis.yaml'; mime='text/yaml';
+  } else if (fmt==='txt') {
+    content = toText(R);
+    filename='upsetting_analysis.txt'; mime='text/plain';
+  } else if (fmt==='md') {
+    content = toMarkdown(R);
+    filename='upsetting_analysis.md'; mime='text/markdown';
+  }
+
+  const blob = new Blob([content],{type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('exportStatus').textContent = '✓ Saved as '+filename;
+  setTimeout(()=>document.getElementById('exportStatus').textContent='', 3000);
+}
+
+function toYAML(obj, depth) {
+  const indent = '  '.repeat(depth);
+  if (obj===null||obj===undefined) return 'null';
+  if (typeof obj === 'number') return obj.toString();
+  if (typeof obj === 'string') return `"${obj}"`;
+  if (typeof obj === 'boolean') return obj.toString();
+  if (Array.isArray(obj)) {
+    if (obj.every(v=>typeof v!=='object'||v===null)) return '['+obj.join(', ')+']';
+    return '\n'+obj.map(v=>indent+'  - '+toYAML(v,depth+1)).join('\n');
+  }
+  return '\n'+Object.entries(obj).map(([k,v])=>`${indent}  ${k}: ${toYAML(v,depth+1)}`).join('\n');
+}
+
+function toText(R) {
+  const I = R.inputs;
+  return `UPSETTING PROCESS — STRESS & POWER ANALYSIS
+============================================
+Generated: ${new Date().toISOString()}
+
+INPUTS
+------
+Workpiece: ${I.L} × ${I.W} × ${I.H} (L×W×H)
+Normal load direction: ${I.loadDir}
+Normal stress: ${I.sigN} (compressive)
+Ram velocity: ${I.V0}
+Boundary: ${I.bcType}
+
+(a) STRESS TENSOR
+${JSON.stringify(I.stressTensor)}
+
+(b) STRESS INVARIANTS
+I1 = ${R.b.I1}
+I2 = ${R.b.I2}
+I3 = ${R.b.I3}
+
+(c) PRINCIPAL STRESSES
+σ1 = ${R.c.p1}  σ2 = ${R.c.p2}  σ3 = ${R.c.p3}
+σ_mean = ${R.c.sigmaMean}
+
+(d) MOHR'S CIRCLE
+Centre = ${R.d.center}  Radius = ${R.d.radius}
+σ1 = ${R.d.sig1}  σ2 = ${R.d.sig2}
+τ_max = ${R.d.tauMax}  θ = ${R.d.angle}°
+
+(e) FLOW CONDITION
+k_f (Von Mises) = ${R.e.kf_vm}
+k_f (Tresca)    = ${R.e.kf_tr}
+
+(f) STRAIN RATE TENSOR
+Principal: ε̇1=${R.f.principals[0]}  ε̇2=${R.f.principals[1]}  ε̇3=${R.f.principals[2]}
+
+(g) VELOCITY FIELD
+Vx = ${R.g.Vx}
+Vy = ${R.g.Vy}
+Vz = ${R.g.Vz}
+
+(h) VELOCITIES AT COORDINATES
+${R.h.velocities.map(v=>`${v.coord}: Vx=${v.Vx}  Vy=${v.Vy}  Vz=${v.Vz}`).join('\n')}
+
+(i) EXTERNAL POWER
+P_compression = ${R.i.P_normal}
+P_shear (top) = ${R.i.P_shear}
+P_ext total   = ${R.i.P_ext}
+P_lateral     = ${R.i.P_lat}
+
+(j) INTERNAL POWER
+P_int = ${R.j.P_int}  (density = ${R.j.density}/vol)
+
+(k) POWER BY PRINCIPAL
+P_principal = ${R.k.P_principal}
+
+(l) EQUIVALENT QUANTITIES
+σ̄ = ${R.l.sig_eq}
+ε̄̇ = ${R.l.eps_eq}
+
+(m) UPPER BOUND
+P_UB density = ${R.m.density}
+P_UB total   = ${R.m.P_ub}
+`;
+}
+
+function toMarkdown(R) {
+  const I = R.inputs;
+  return `# Upsetting Process — Stress & Power Analysis
+
+> Generated: ${new Date().toISOString()}
+
+## Problem Setup
+| Parameter | Value |
+|-----------|-------|
+| Workpiece (L×W×H) | ${I.L} × ${I.W} × ${I.H} |
+| Load Direction | ${I.loadDir} |
+| Normal Stress | −${I.sigN} (compressive) |
+| Ram Velocity | ${I.V0} |
+| Boundary Condition | ${I.bcType} |
+
+## (a) Applied Stress Tensor
+\`\`\`
+${JSON.stringify(I.stressTensor)}
+\`\`\`
+
+## (b) Stress Invariants
+- **I₁** = ${R.b.I1}
+- **I₂** = ${R.b.I2}
+- **I₃** = ${R.b.I3}
+
+## (c) Principal Stresses & Deviatoric
+- σ₁ = ${R.c.p1}, σ₂ = ${R.c.p2}, σ₃ = ${R.c.p3}
+- σ_mean = ${R.c.sigmaMean}
+
+## (d) Mohr's Circle
+- Centre = ${R.d.center}, R = ${R.d.radius}
+- τ_max = ${R.d.tauMax}, θ = ${R.d.angle}°
+
+## (e) Flow Condition
+- k_f (Von Mises) = **${R.e.kf_vm}**
+- k_f (Tresca) = **${R.e.kf_tr}**
+
+## (f) Strain Rate — Principal
+ε̇₁ = ${R.f.principals[0]}, ε̇₂ = ${R.f.principals[1]}, ε̇₃ = ${R.f.principals[2]}
+
+## (g) Velocity Field
+- Vx = ${R.g.Vx}
+- Vy = ${R.g.Vy}
+- Vz = ${R.g.Vz}
+
+## (h) Velocities
+${R.h.velocities.map(v=>`- ${v.coord}: Vx=${v.Vx}, Vy=${v.Vy}, Vz=${v.Vz}`).join('\n')}
+
+## (i–k) Power Analysis
+| Component | Value |
+|-----------|-------|
+| P_compression | ${R.i.P_normal} |
+| P_shear top | ${R.i.P_shear} |
+| **P_ext total** | **${R.i.P_ext}** |
+| P_internal | ${R.j.P_int} |
+| P_principal | ${R.k.P_principal} |
+
+## (l) Equivalent Quantities
+- σ̄ = ${R.l.sig_eq}
+- ε̄̇ = ${R.l.eps_eq}
+
+## (m) Upper Bound
+- P_UB per unit volume = ${R.m.density}
+- P_UB total = ${R.m.P_ub}
+
+---
+*Computed by Upsetting Process Analyzer*
+`;
+}
+
+// ========================
+// AUTO-ANALYZE ON LOAD
+// ========================
+function initFBDRotation() {
+  const cv = document.getElementById('fbd3d');
+  if (!cv || cv.dataset.rotateReady) return;
+  cv.dataset.rotateReady = '1';
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+  cv.style.cursor = 'grab';
+  cv.addEventListener('pointerdown', e => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    cv.setPointerCapture(e.pointerId);
+    cv.style.cursor = 'grabbing';
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!dragging || !lastResults) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    fbdYaw += dx * 0.012;
+    fbdDepth = Math.max(0.25, Math.min(0.9, fbdDepth + dy * 0.003));
+    drawFBD(lastResults.inputs.stressTensor, lastResults.inputs.loadDir, lastResults.inputs.bcType, lastResults.inputs.L, lastResults.inputs.W, lastResults.inputs.H, lastResults.inputs.bounds);
+  });
+  const stop = e => {
+    dragging = false;
+    cv.style.cursor = 'grab';
+    if (e.pointerId !== undefined && cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId);
+  };
+  cv.addEventListener('pointerup', stop);
+  cv.addEventListener('pointercancel', stop);
+  cv.addEventListener('pointerleave', () => { dragging = false; cv.style.cursor = 'grab'; });
+}
+
+window.addEventListener('load', () => {
+  initFBDRotation();
+  document.querySelectorAll('input[type="number"]').forEach(el => {
+    if (el.type !== 'hidden') el.addEventListener('input', scheduleAnalyze);
+    el.addEventListener('change', scheduleAnalyze);
+  });
+  document.querySelectorAll('#simpleMode input').forEach(inp => highlightNonZero(inp));
+  setTimeout(analyze, 120);
+});
+
+window.addEventListener('resize', () => {
+  if (lastResults) {
+    analyze();
+  }
+});
+</script>
+</body>
+</html>
